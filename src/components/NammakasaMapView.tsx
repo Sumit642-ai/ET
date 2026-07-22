@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polygon, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { FraudCase, FraudRing } from '../types/fraud';
-import { Crosshair, Plus, Minus } from 'lucide-react';
+import { Crosshair, Plus, Minus, Sun, Moon } from 'lucide-react';
 
 interface NammakasaMapViewProps {
   cases: FraudCase[];
@@ -237,6 +237,7 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
   activeRingCount,
   totalAmountAtRisk
 }) => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedWard, setSelectedWard] = useState<typeof WB_CHOROPLETH_BOUNDARIES[0] | null>(
     WB_CHOROPLETH_BOUNDARIES[0]
   );
@@ -295,49 +296,57 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
     <div className="map-canvas-wrapper relative select-none w-full min-h-[500px]" style={{ height: 'calc(100vh - 170px)' }}>
       {/* Top Left Stats Badge */}
       <div 
-        className="absolute top-5 left-5 z-[999] bg-white border border-gray-100 rounded-xl px-4 py-2 shadow-md flex items-center gap-3 font-sans"
+        className={`absolute top-5 left-5 z-[999] border rounded-xl px-4 py-2 shadow-md flex items-center gap-3 font-sans transition-colors ${
+          isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-gray-100 text-slate-900'
+        }`}
       >
         <div className="flex items-baseline gap-1.5">
-          <span className="text-rose-600 font-extrabold text-base font-display">6893</span>
-          <span className="text-gray-500 font-semibold text-xs">Active</span>
+          <span className="text-rose-500 font-extrabold text-base font-display">6893</span>
+          <span className={`font-semibold text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Active</span>
         </div>
-        <div className="w-[1px] h-4 bg-gray-200" />
+        <div className={`w-[1px] h-4 ${isDarkMode ? 'bg-slate-800' : 'bg-gray-200'}`} />
         <div className="flex items-baseline gap-1.5">
-          <span className="text-amber-600 font-extrabold text-base font-display">7160</span>
-          <span className="text-gray-500 font-semibold text-xs">Reports</span>
+          <span className="text-amber-500 font-extrabold text-base font-display">7160</span>
+          <span className={`font-semibold text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Reports</span>
         </div>
       </div>
 
       {/* Bottom Left Active Ward Card */}
       {selectedWard && (
-        <div className="absolute bottom-6 left-5 z-[999] bg-white border border-gray-100 rounded-2xl p-4 shadow-xl max-w-xs font-sans animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <h4 className="font-extrabold text-slate-900 text-sm font-display leading-tight">
+        <div className={`absolute bottom-6 left-5 z-[999] border rounded-2xl p-4 shadow-xl max-w-xs font-sans transition-colors ${
+          isDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-gray-100 text-slate-900'
+        }`}>
+          <h4 className="font-extrabold text-sm font-display leading-tight">
             {selectedWard.name}
           </h4>
-          <p className="text-[11px] text-gray-400 font-medium mt-0.5">
+          <p className={`text-[11px] font-medium mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-gray-400'}`}>
             {selectedWard.subName}
           </p>
-          <p className="text-[11px] text-gray-500 font-semibold mt-1">
+          <p className={`text-[11px] font-semibold mt-1 ${isDarkMode ? 'text-slate-300' : 'text-gray-500'}`}>
             {selectedWard.zone}
           </p>
-          <p className="text-xs font-extrabold text-rose-600 mt-2 font-display">
+          <p className="text-xs font-extrabold text-rose-500 mt-2 font-display">
             {selectedWard.reportsCount} reports
           </p>
         </div>
       )}
 
-      {/* Top Right Floating Accent Button */}
+      {/* Top Right Dark / Light Theme Toggle Button */}
       <div className="absolute top-5 right-5 z-[999]">
         <button
-          onClick={onOpenIntake}
-          className="w-10 h-10 bg-slate-900 hover:bg-slate-800 text-yellow-400 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-105"
-          title="Scan QR to Report"
+          onClick={() => setIsDarkMode(prev => !prev)}
+          className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-xl transition-all hover:scale-105 border ${
+            isDarkMode 
+              ? 'bg-slate-900 text-amber-400 border-slate-700 hover:bg-slate-800' 
+              : 'bg-white text-slate-800 border-gray-200 hover:bg-gray-50'
+          }`}
+          title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          <span className="text-lg">☀️</span>
+          {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5 text-slate-800" />}
         </button>
       </div>
 
-      {/* CartoDB Light Positron Base Map */}
+      {/* Map Container (Switches between CartoDB Dark Matter and CartoDB Positron) */}
       <MapContainer
         center={CENTER_WB}
         zoom={11}
@@ -346,11 +355,16 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
         style={{ width: '100%', height: '100%', minHeight: '500px' }}
       >
         <TileLayer
+          key={isDarkMode ? 'dark-tiles' : 'light-tiles'}
           attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url={
+            isDarkMode
+              ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+              : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+          }
         />
 
-        {/* West Bengal Light Pink Choropleth Ward Mesh Layer with Interactive Hover Highlight */}
+        {/* West Bengal Light Pink / Dark Rose Choropleth Ward Mesh Layer */}
         {WB_CHOROPLETH_BOUNDARIES.map((poly) => {
           const isHovered = hoveredWardId === poly.id || selectedWard?.id === poly.id;
 
@@ -359,9 +373,9 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
               key={poly.id}
               positions={poly.bounds}
               pathOptions={{
-                color: isHovered ? '#DC2626' : '#F87171',
-                fillColor: isHovered ? '#F87171' : '#FCA5A5',
-                fillOpacity: isHovered ? 0.65 : 0.28,
+                color: isHovered ? '#DC2626' : isDarkMode ? '#F87171' : '#F87171',
+                fillColor: isHovered ? '#DC2626' : '#FCA5A5',
+                fillOpacity: isHovered ? 0.65 : isDarkMode ? 0.35 : 0.28,
                 weight: isHovered ? 3.5 : 1.2,
                 dashArray: isHovered ? undefined : '2, 4'
               }}
@@ -381,7 +395,7 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
           );
         })}
 
-        {/* NammaKasa Dark Maroon Circle Cluster Bubbles with Sync Hover */}
+        {/* NammaKasa Dark Maroon Circle Cluster Bubbles */}
         {NAMMAKASA_MAP_CLUSTERS.map((cluster, idx) => {
           const isHovered = hoveredWardId === cluster.id || selectedWard?.id === cluster.id;
 
@@ -417,29 +431,37 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
 
         {/* Stacked Map Controls (Locate Me, +, -) */}
         <div className="absolute bottom-6 right-5 z-[999] flex flex-col gap-2 select-none">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col divide-y divide-gray-100">
+          <div className={`rounded-xl shadow-lg border overflow-hidden flex flex-col divide-y transition-colors ${
+            isDarkMode ? 'bg-slate-900 border-slate-800 divide-slate-800' : 'bg-white border-gray-200 divide-gray-100'
+          }`}>
             <button
               onClick={() => {
                 if (navigator.geolocation) {
                   navigator.geolocation.getCurrentPosition(() => {});
                 }
               }}
-              className="w-10 h-10 hover:bg-gray-50 text-slate-700 flex items-center justify-center transition-colors"
+              className={`w-10 h-10 flex items-center justify-center transition-colors ${
+                isDarkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-gray-50 text-slate-700'
+              }`}
               title="Locate Me"
             >
-              <Crosshair className="w-5 h-5 text-slate-700" />
+              <Crosshair className="w-5 h-5" />
             </button>
             <button
-              className="w-10 h-10 hover:bg-gray-50 text-slate-700 flex items-center justify-center font-bold text-lg transition-colors"
+              className={`w-10 h-10 flex items-center justify-center font-bold text-lg transition-colors ${
+                isDarkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-gray-50 text-slate-700'
+              }`}
               title="Zoom In"
             >
-              <Plus className="w-5 h-5 text-slate-700" />
+              <Plus className="w-5 h-5" />
             </button>
             <button
-              className="w-10 h-10 hover:bg-gray-50 text-slate-700 flex items-center justify-center font-bold text-lg transition-colors"
+              className={`w-10 h-10 flex items-center justify-center font-bold text-lg transition-colors ${
+                isDarkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-gray-50 text-slate-700'
+              }`}
               title="Zoom Out"
             >
-              <Minus className="w-5 h-5 text-slate-700" />
+              <Minus className="w-5 h-5" />
             </button>
           </div>
         </div>
