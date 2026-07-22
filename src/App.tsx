@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { FraudCase, FraudRing, ViewMode, FilterState, CaseReport } from './types/fraud';
+import { FraudCase, FraudRing, ViewMode, FilterState, CaseReport, EvidenceLink } from './types/fraud';
 import { INITIAL_CASES } from './data/seedData';
 import { detectFraudRings } from './services/evidenceEngine';
 
@@ -17,8 +17,16 @@ import { RingDetailDrawer } from './components/RingDetailDrawer';
 import { CaseReportModal } from './components/CaseReportModal';
 import { BottomNav } from './components/BottomNav';
 
-const MainApplication: React.FC = () => {
+interface MainAppProps {
+  userRole: 'analyst' | 'police';
+}
+
+const API_BASE = 'http://localhost:5000/api';
+
+const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
   const [cases, setCases] = useState<FraudCase[]>(INITIAL_CASES);
+  const [serverRings, setServerRings] = useState<FraudRing[]>([]);
+  const [serverLinks, setServerLinks] = useState<EvidenceLink[]>([]);
   const [currentView, setCurrentView] = useState<ViewMode>('map');
   const [language, setLanguage] = useState<'en' | 'bn'>('bn');
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
@@ -35,14 +43,58 @@ const MainApplication: React.FC = () => {
     selectedCity: 'all'
   });
 
-  // Calculate dynamic links & rings using multi-signal fusion engine
-  const { links, rings } = useMemo(() => {
+  // Fetch Cases and Rings from Express Backend Server (http://localhost:5000/api)
+  const fetchBackendData = async () => {
+    try {
+      const resCases = await fetch(`${API_BASE}/cases`);
+      const dataCases = await resCases.json();
+      if (dataCases.success && dataCases.cases.length > 0) {
+        setCases(dataCases.cases);
+      }
+
+      const resRings = await fetch(`${API_BASE}/rings`);
+      const dataRings = await resRings.json();
+      if (dataRings.success) {
+        setServerRings(dataRings.rings);
+        setServerLinks(dataRings.links);
+      }
+    } catch (err) {
+      console.warn('[Chakravyuh Frontend] Backend API offline. Using high-density fallback seed dataset.', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchBackendData();
+  }, []);
+
+  // Calculate dynamic links & rings if server response pending
+  const fallbackEngine = useMemo(() => {
     return detectFraudRings(cases, 0.30);
   }, [cases]);
 
-  // Apply filters
+  const activeRings = serverRings.length > 0 ? serverRings : fallbackEngine.rings;
+  const activeLinks = serverLinks.length > 0 ? serverLinks : fallbackEngine.links;
+
+  // Role-Based Access Control (RBAC): Analyst gets 30% view scope, Police Admin gets 100%
+  const rbacCases = useMemo(() => {
+    if (userRole === 'analyst') {
+      const sliceCount = Math.max(5, Math.ceil(cases.length * 0.30));
+      return cases.slice(0, sliceCount);
+    }
+    return cases;
+  }, [cases, userRole]);
+
+  const rbacRings = useMemo(() => {
+    if (userRole === 'analyst') {
+      const sliceCount = Math.max(1, Math.ceil(activeRings.length * 0.30));
+      return activeRings.slice(0, sliceCount);
+    }
+    return activeRings;
+  }, [activeRings, userRole]);
+
+  // Apply UI Filters
   const filteredCases = useMemo(() => {
-    return cases.filter(c => {
+    return rbacCases.filter(c => {
       if (filters.severity === 'critical' && c.risk_score < 90) return false;
       if (filters.severity === 'high' && (c.risk_score < 75 || c.risk_score >= 90)) return false;
       if (filters.severity === 'medium' && (c.risk_score < 50 || c.risk_score >= 75)) return false;
@@ -62,20 +114,36 @@ const MainApplication: React.FC = () => {
 
       return true;
     });
-  }, [cases, filters]);
+  }, [rbacCases, filters]);
 
   const totalAmountAtRisk = useMemo(() => {
-    return rings.reduce((acc, r) => acc + r.total_amount_at_risk, 0);
-  }, [rings]);
+    return rbacRings.reduce((acc, r) => acc + r.total_amount_at_risk, 0);
+  }, [rbacRings]);
 
   // Dynamic Total Reports Counter (matches 6893 + newly added cases)
   const totalReportCount = useMemo(() => {
     return 6893 + (cases.length - INITIAL_CASES.length);
   }, [cases]);
 
-  // Real-time Complaint Ingestion Handler
-  const handleIngestNewCase = (newCase: FraudCase) => {
-    setCases(prev => [newCase, ...prev]);
+  // Live Complaint Ingestion Handler (POST to Express Backend API)
+  const handleIngestNewCase = async (newCase: FraudCase) => {
+    try {
+      const response = await fetch(`${API_BASE}/cases`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCase)
+      });
+      const data = await response.json();
+      if (data.success) {
+        setCases(prev => [data.case, ...prev]);
+        setServerRings(data.rings);
+        setServerLinks(data.links);
+      } else {
+        setCases(prev => [newCase, ...prev]);
+      }
+    } catch {
+      setCases(prev => [newCase, ...prev]);
+    }
 
     confetti({
       particleCount: 90,
@@ -88,16 +156,25 @@ const MainApplication: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-rose-500 selection:text-white pb-16">
-      {/* Top Header Navigation (Project Chakravyuh) */}
+      {/* Top Header Navigation */}
       <Header
         currentView={currentView}
         onViewChange={setCurrentView}
         onOpenIntake={() => setIsIntakeOpen(true)}
-        activeRingCount={rings.length}
+        activeRingCount={rbacRings.length}
         totalAtRisk={totalAmountAtRisk}
         language={language}
         onToggleLanguage={() => setLanguage(l => l === 'bn' ? 'en' : 'bn')}
       />
+
+      {/* RBAC Role Indicator Banner */}
+      <div className="bg-slate-900 text-white text-xs px-6 py-1.5 flex items-center justify-between border-b border-slate-800 font-mono">
+        <span className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${userRole === 'analyst' ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+          LOGGED IN ROLE: <strong className="uppercase text-rose-400">{userRole === 'analyst' ? 'Bank Analyst (30% Scope)' : 'Police Admin (100% Scope)'}</strong>
+        </span>
+        <a href="/login" className="text-slate-400 hover:text-white underline">Switch Role / Logout</a>
+      </div>
 
       {/* Filter Controls Bar */}
       <FilterBar
@@ -110,7 +187,7 @@ const MainApplication: React.FC = () => {
           searchQuery: '',
           selectedCity: 'all'
         })}
-        totalCases={cases.length}
+        totalCases={rbacCases.length}
         filteredCount={filteredCases.length}
         currentView={currentView}
         onViewChange={setCurrentView}
@@ -121,11 +198,11 @@ const MainApplication: React.FC = () => {
         {currentView === 'map' && (
           <NammakasaMapView
             cases={filteredCases}
-            rings={rings}
+            rings={rbacRings}
             onSelectRing={setSelectedRing}
             onSelectCase={setSelectedCase}
             onOpenIntake={() => setIsIntakeOpen(true)}
-            activeRingCount={rings.length}
+            activeRingCount={rbacRings.length}
             totalAmountAtRisk={totalAmountAtRisk}
           />
         )}
@@ -133,27 +210,35 @@ const MainApplication: React.FC = () => {
         {currentView === 'graph' && (
           <NetworkGraphView
             cases={filteredCases}
-            links={links}
-            rings={rings}
+            links={activeLinks}
+            rings={rbacRings}
             onSelectCase={setSelectedCase}
             onSelectRing={setSelectedRing}
           />
         )}
 
-        {(currentView === 'list' || currentView === 'reports') && (
+        {currentView === 'list' && (
           <ListView
             cases={filteredCases}
-            rings={rings}
+            rings={rbacRings}
             onSelectCase={setSelectedCase}
+            onSelectRing={setSelectedRing}
+          />
+        )}
+
+        {currentView === 'reports' && (
+          <DashboardView
+            cases={filteredCases}
+            rings={rbacRings}
             onSelectRing={setSelectedRing}
           />
         )}
       </main>
 
-      {/* Sticky Bottom Action Navigation Bar (Chakravyuh Navy Capsule) */}
+      {/* Sticky Bottom Action Navigation Bar */}
       <BottomNav
         onOpenIntake={() => setIsIntakeOpen(true)}
-        activeRingCount={rings.length}
+        activeRingCount={rbacRings.length}
         totalAtRisk={totalAmountAtRisk}
         totalReportCount={totalReportCount}
       />
@@ -183,7 +268,7 @@ const MainApplication: React.FC = () => {
 };
 
 export const App: React.FC = () => {
-  const [userRole, setUserRole] = useState<'analyst' | 'police' | null>(() => {
+  const [userRole, setUserRole] = useState<'analyst' | 'police'>(() => {
     return (localStorage.getItem('chakravyuh_user_role') as any) || 'analyst';
   });
 
@@ -196,7 +281,7 @@ export const App: React.FC = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginScreen onLogin={handleLogin} />} />
-        <Route path="/" element={<MainApplication />} />
+        <Route path="/" element={<MainApplication userRole={userRole} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
