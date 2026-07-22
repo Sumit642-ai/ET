@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ViewMode } from '../types/fraud';
-import { Shield, Building2, ChevronDown, User } from 'lucide-react';
+import { Building2, ChevronDown, User, Shield } from 'lucide-react';
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -24,10 +24,14 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="w-full bg-[#0B101E] text-white select-none shadow-md font-sans z-50 border-b border-[#1A2235]">
       {/* Main Navbar Row */}
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
-        {/* Left: Brand Logo ChakraView */}
+        {/* Left: Brand Logo ChakraView with Red Globe Image */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-rose-600/20 border border-rose-500/40 text-rose-500 flex items-center justify-center font-extrabold shadow-lg shadow-rose-950/50">
-            <Shield className="w-5 h-5 text-rose-500" />
+          <div className="w-10 h-10 rounded-xl bg-rose-600/20 border border-rose-500/40 overflow-hidden flex items-center justify-center shadow-lg shadow-rose-950/50">
+            <img 
+              src="/red_globe_logo.png" 
+              alt="ChakraView Red Globe Logo" 
+              className="w-full h-full object-cover rounded-xl scale-110"
+            />
           </div>
           <a href="/" className="flex items-baseline gap-0.5 no-underline">
             <span className="text-2xl font-black text-white font-display tracking-tight">Chakra</span>

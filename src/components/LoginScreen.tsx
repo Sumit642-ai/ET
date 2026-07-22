@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Building2, Lock, ArrowRight, Sparkles } from 'lucide-react';
+import { Building2, Lock, ArrowRight, Sparkles, Shield } from 'lucide-react';
 
 interface LoginScreenProps {
   onLogin: (role: 'analyst' | 'police') => void;
@@ -14,7 +14,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const handleLogin = (role: 'analyst' | 'police') => {
     setIsTransitioning(true);
 
-    // 1-Second Zoom/Fade Transition on glowing visual before routing to main app
     setTimeout(() => {
       onLogin(role);
       navigate('/');
@@ -51,10 +50,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       <div className={`relative z-10 w-full max-w-md bg-[#1A2235]/80 backdrop-blur-xl border border-slate-700/60 rounded-3xl p-8 shadow-2xl shadow-rose-950/40 space-y-6 transition-all duration-700 ${
         isTransitioning ? 'scale-90 opacity-0' : 'scale-100 opacity-100'
       }`}>
-        {/* Brand Header */}
+        {/* Brand Header with Red Globe Image Logo */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-b from-rose-600 to-rose-900 text-white border border-rose-400/40 shadow-lg shadow-rose-950/60 mb-2">
-            <Shield className="w-7 h-7 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-b from-rose-600 to-rose-900 text-white border border-rose-400/40 shadow-lg shadow-rose-950/60 mb-2 overflow-hidden">
+            <img 
+              src="/red_globe_logo.png" 
+              alt="ChakraView Red Globe Logo" 
+              className="w-full h-full object-cover rounded-2xl scale-110"
+            />
           </div>
           
           <h1 className="text-3xl font-black tracking-tight font-display">
