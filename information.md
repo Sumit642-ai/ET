@@ -23,6 +23,27 @@
 
 ---
 
+## 📝 Structured Complaint Intake Form Schema
+
+The Complaint Form strictly enforces 12 structured fields for DPDP PII compliance and multi-signal fusion analysis:
+
+| # | Field Name | Description / Format | Compliance Purpose |
+|---|---|---|---|
+| 1 | **Internal Case ID / Customer ID** | `CUST-88990022` | Replaces victim name for DPDP compliance and PII avoidance |
+| 2 | **Scammer Bank Account Number** | `ACCT-9900112233` | Hard identifier matching across mule account networks |
+| 3 | **Bank IFSC Code** | `UTIB0000123` | Identifies destination mule bank branch |
+| 4 | **Destination UPI VPA** | `clearance.supreme.court@okaxis` | Exact-match VPA linkage scoring |
+| 5 | **Scammer Phone Number** | `+91 98301 22998` | Telecom SIM box & WhatsApp call correlation |
+| 6 | **Ingress Device ID** | `DEV-NEW-9988` | Hardware fingerprint & IMEI correlation |
+| 7 | **IP Address** | `103.211.89.55` | Subnet & VPN proxy detection |
+| 8 | **Amount at Risk (₹)** | `2,40,0000` | Financial impact aggregation in ₹ Lakhs |
+| 9 | **Incident Timestamp (Date & Time)** | `YYYY-MM-DDTHH:MM` | Spatiotemporal velocity calculation |
+| 10 | **City / District** | `Kolkata`, `Howrah`, `Siliguri` | Regional hotspot mapping |
+| 11 | **Pin Code** | `700017` | Fine-grained civic postal boundary mapping |
+| 12 | **Call Transcript / Statement** | Unstructured Text Box | NLP Cosine Similarity script embedding analysis |
+
+---
+
 ## 🔍 Page-by-Page & Component Breakdown
 
 ### 1. Header Navigation (`src/components/Header.tsx`)
@@ -41,7 +62,7 @@
 
 ### 3. Interactive Map Workspace (`src/components/NammakasaMapView.tsx`)
 - **Base Map**: Light greyscale CartoDB tiles.
-- **District Boundary Mesh**: Multi-polygon overlay representing Kolkata Municipal Corporation wards (Burrabazar, Park Circus, Salt Lake, New Town, Alipore, Jadavpur, Shyambazar) and West Bengal districts (Howrah, Siliguri, Asansol, Malda, Kharagpur).
+- **District Boundary Mesh**: Multi-polygon overlay representing Kolkata Municipal Corporation wards and West Bengal districts.
 - **Interactive Hover & Sync**: Moving the cursor over a polygon or maroon bubble highlights the district border, enlarges the circle, and updates the bottom-left ward card instantly.
 - **Map Controls**: Stacked white controls (`Locate Me`, `Zoom In (+)`, `Zoom Out (-)`).
 
@@ -55,15 +76,15 @@
 
 ### 5. List & Reports Workspace (`src/components/ListView.tsx`)
 - **Clean Light UI Card Grid**: White background cards (`#FFFFFF`) with subtle borders (`#E2E8F0`) and soft shadows (`shadow-sm`).
-- **Tab Switcher**: Toggle between **All Fraud Complaints** (14 seeded cases + user additions) and **Detected Fraud Rings** (3 active syndicates).
-- **Card Metrics**: Displays Case ID badge (`CASE-2026-xxx`), Risk Score, Victim Name, Ward/Location, Amount at Risk (in ₹ Lakhs), Destination UPI VPA, and Transcript excerpt.
+- **Tab Switcher**: Toggle between **All Fraud Complaints** and **Detected Fraud Rings**.
+- **Card Metrics**: Displays Case ID badge (`CASE-2026-xxx`), Risk Score, Internal Customer ID, Ward/Location, Amount at Risk (in ₹ Lakhs), Destination UPI VPA, and Transcript excerpt.
 
 ### 6. Scan QR & Report Complaint Modal (`src/components/CaseIntakeModal.tsx`)
 - 📷 **Camera QR Scanner Tab**:
   - **Live Webcam Integration**: Streams actual webcam feed via `navigator.mediaDevices.getUserMedia`.
   - **Interactive QR Simulation**: Clicking **"Scan QR Code Now"** triggers a scanning animation, auto-verifies the QR code, auto-detects Kolkata Ward 46 (Burrabazar Escrow Scam), adds the complaint live to the map, fires celebratory confetti, and increments the report counter (`6893` ➔ `6894`).
 - 📝 **Complaint Intake Form Tab**:
-  - Manual entry for Victim Name, Amount (₹), Destination UPI VPA, Ingress Device ID, City, Ward, and Call Transcript.
+  - Contains all 12 structured fields listed above.
 - ⚡ **Hackathon Judge Demo Script Button**:
   - One-click auto-fill pre-loaded with a CBI Digital Arrest scam transcript for rapid hackathon evaluation.
 

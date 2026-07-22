@@ -1,33 +1,21 @@
-import { FraudCase, EvidenceLink, FraudRing, Recommendation, CaseReport, EvidenceType } from '../types/fraud';
+import { FraudCase, EvidenceLink, FraudRing, Recommendation, CaseReport, LinkageType, EvidenceType } from '../types/fraud';
 
-// 1. Text Embedding & Script Similarity Scorer (Cosine Similarity based on Term Frequency & Scam Patterns)
-export function computeScriptSimilarity(textA: string, textB: string): number {
-  const normA = textA.toLowerCase();
-  const normB = textB.toLowerCase();
+// Calculate Cosine Similarity between 2 transcript texts (Keyword-based TF vector approach)
+export function calculateTranscriptSimilarity(textA: string, textB: string): number {
+  if (!textA || !textB) return 0;
 
-  // Core scam script trigger n-grams (CBI Digital Arrest, Customs, Telegram Job, etc.)
-  const keywords = [
-    'rakesh sharma', 'cbi', 'cyber cell', 'fedex', 'mdma', 'narcotics', 'passports',
-    'digital arrest', 'escrow', 'supreme court', 'rbi', 'audit', 'money laundering',
-    'customs', 'duty', 'seizure', 'airport', 'telegram', 'google maps', 'rating', 'task'
-  ];
+  const tokenize = (str: string) => {
+    return str
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .split(/\s+/)
+      .filter(w => w.length > 3);
+  };
 
-  let matchCount = 0;
-  let totalKeyWordsFound = 0;
+  const wordsA = tokenize(textA);
+  const wordsB = tokenize(textB);
 
-  keywords.forEach(kw => {
-    const inA = normA.includes(kw);
-    const inB = normB.includes(kw);
-    if (inA || inB) totalKeyWordsFound++;
-    if (inA && inB) matchCount++;
-  });
-
-  if (totalKeyWordsFound === 0) return 0.1;
-  const keywordScore = matchCount / Math.max(1, totalKeyWordsFound);
-
-  // Word overlap cosine similarity
-  const wordsA = normA.split(/\W+/).filter(w => w.length > 3);
-  const wordsB = normB.split(/\W+/).filter(w => w.length > 3);
+  if (wordsA.length === 0 || wordsB.length === 0) return 0;
 
   const freqA: Record<string, number> = {};
   const freqB: Record<string, number> = {};
@@ -36,6 +24,7 @@ export function computeScriptSimilarity(textA: string, textB: string): number {
   wordsB.forEach(w => freqB[w] = (freqB[w] || 0) + 1);
 
   const allWords = Array.from(new Set([...wordsA, ...wordsB]));
+
   let dotProduct = 0;
   let magA = 0;
   let magB = 0;
@@ -48,240 +37,227 @@ export function computeScriptSimilarity(textA: string, textB: string): number {
     magB += b * b;
   });
 
-  const wordCosine = magA && magB ? dotProduct / (Math.sqrt(magA) * Math.sqrt(magB)) : 0;
-
-  // Combined Script Cosine Similarity (Weighted 70% keyword script pattern + 30% text cosine)
-  const combinedScriptScore = (0.7 * keywordScore) + (0.3 * wordCosine);
-  return Math.min(1.0, Math.max(0.0, combinedScriptScore * 1.15));
+  if (magA === 0 || magB === 0) return 0;
+  return dotProduct / (Math.sqrt(magA) * Math.sqrt(magB));
 }
 
-// 2. Exact Identifier Scorer
-export function computeExactMatchScore(caseA: FraudCase, caseB: FraudCase): { score: number; matchedFields: string[] } {
-  const matchedFields: string[] = [];
+// Calculate Haversine Distance (in km) between 2 lat/lng pairs
+export function calculateGeoDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Multi-Signal Evidence Fusion Scorer (0.45 Exact + 0.35 Script + 0.20 Geo)
+export function evaluatePairwiseEvidence(caseA: FraudCase, caseB: FraudCase): EvidenceLink | null {
+  if (caseA.case_id === caseB.case_id) return null;
+
+  // 1. Exact Match Sub-scorer (0.45 weight)
+  let exactMatchScore = 0;
+  let matchedValue = '';
+  let linkageType: LinkageType = 'composite';
 
   if (caseA.upi_vpa && caseA.upi_vpa === caseB.upi_vpa) {
-    matchedFields.push(`UPI (${caseA.upi_vpa})`);
+    exactMatchScore = 1.0;
+    matchedValue = caseA.upi_vpa;
+    linkageType = 'exact_upi';
+  } else if (caseA.device_id && caseA.device_id === caseB.device_id) {
+    exactMatchScore = 1.0;
+    matchedValue = caseA.device_id;
+    linkageType = 'exact_device';
+  } else if (caseA.scammer_account_number && caseA.scammer_account_number === caseB.scammer_account_number) {
+    exactMatchScore = 1.0;
+    matchedValue = caseA.scammer_account_number;
+    linkageType = 'exact_account';
+  } else if (caseA.scammer_phone_number && caseA.scammer_phone_number === caseB.scammer_phone_number) {
+    exactMatchScore = 1.0;
+    matchedValue = caseA.scammer_phone_number;
+    linkageType = 'exact_phone';
+  } else if (caseA.ip_address && caseA.ip_address === caseB.ip_address) {
+    exactMatchScore = 0.85;
+    matchedValue = caseA.ip_address;
+    linkageType = 'exact_ip';
   }
-  if (caseA.device_id && caseA.device_id === caseB.device_id) {
-    matchedFields.push(`Device (${caseA.device_id})`);
-  }
-  if (caseA.account_number && caseA.account_number === caseB.account_number) {
-    matchedFields.push(`Account (${caseA.account_number})`);
-  }
-  if (caseA.ip_address && caseA.ip_address === caseB.ip_address) {
-    matchedFields.push(`IP (${caseA.ip_address})`);
+
+  // 2. Script Cosine Similarity Sub-scorer (0.35 weight)
+  const scriptSim = calculateTranscriptSimilarity(caseA.transcript_text, caseB.transcript_text);
+  if (scriptSim > 0.40 && exactMatchScore === 0) {
+    linkageType = 'script_embedding';
   }
 
-  let score = 0.0;
-  if (matchedFields.some(f => f.startsWith('UPI') || f.startsWith('Device') || f.startsWith('Account'))) {
-    score = 1.0;
-  } else if (matchedFields.some(f => f.startsWith('IP'))) {
-    score = 0.6;
-  }
+  // 3. Spatiotemporal & Behavioral Sub-scorer (0.20 weight)
+  const geoDistKm = (caseA.lat && caseB.lat) ? calculateGeoDistance(caseA.lat, caseA.lng, caseB.lat, caseB.lng) : 50;
+  const timeDeltaHours = Math.abs(new Date(caseA.timestamp).getTime() - new Date(caseB.timestamp).getTime()) / (1000 * 3600);
 
-  return { score, matchedFields };
-}
+  let behavioralScore = 0;
+  if (geoDistKm < 15) behavioralScore += 0.5;
+  if (timeDeltaHours < 72) behavioralScore += 0.5;
 
-// 3. Behavioral Proximity Scorer
-export function computeBehavioralScore(caseA: FraudCase, caseB: FraudCase): number {
-  // Timestamp proximity
-  const timeA = new Date(caseA.timestamp).getTime();
-  const timeB = new Date(caseB.timestamp).getTime();
-  const diffHours = Math.abs(timeA - timeB) / (1000 * 60 * 60);
+  // Composite Fusion Formula
+  const combinedScore = (0.45 * exactMatchScore) + (0.35 * scriptSim) + (0.20 * behavioralScore);
 
-  let timeScore = 0;
-  if (diffHours <= 24) timeScore = 1.0;
-  else if (diffHours <= 72) timeScore = 0.7;
-  else if (diffHours <= 168) timeScore = 0.4;
-
-  // Amount ratio closeness
-  const amtRatio = Math.min(caseA.amount, caseB.amount) / Math.max(caseA.amount, caseB.amount);
-
-  // City proximity
-  const sameCity = caseA.city === caseB.city ? 1.0 : 0.4;
-
-  return (0.4 * timeScore) + (0.3 * amtRatio) + (0.3 * sameCity);
-}
-
-// 4. Multi-Signal Evidence Fusion Scorer
-export function computeEvidenceLink(caseA: FraudCase, caseB: FraudCase): EvidenceLink {
-  const { score: exactScore, matchedFields } = computeExactMatchScore(caseA, caseB);
-  const scriptScore = computeScriptSimilarity(caseA.transcript_text, caseB.transcript_text);
-  const behavioralScore = computeBehavioralScore(caseA, caseB);
-
-  // Weights: Exact Match 0.45, Script Similarity 0.35, Behavioral Proximity 0.20
-  const combined_score = (0.45 * exactScore) + (0.35 * scriptScore) + (0.20 * behavioralScore);
+  if (combinedScore < 0.25) return null;
 
   return {
+    source_case_id: caseA.case_id,
+    target_case_id: caseB.case_id,
     case_id_a: caseA.case_id,
     case_id_b: caseB.case_id,
-    exact_match_score: exactScore,
-    script_similarity_score: scriptScore,
-    behavioral_score: behavioralScore,
-    combined_score,
-    matched_fields: matchedFields
+    linkage_type: linkageType,
+    confidence_score: parseFloat(combinedScore.toFixed(3)),
+    exact_match_score: exactMatchScore,
+    script_similarity_score: parseFloat(scriptSim.toFixed(3)),
+    behavioral_score: parseFloat(behavioralScore.toFixed(3)),
+    combined_score: parseFloat(combinedScore.toFixed(3)),
+    weight: parseFloat(combinedScore.toFixed(3)),
+    details: {
+      matched_value: matchedValue,
+      script_similarity: parseFloat(scriptSim.toFixed(3)),
+      spatial_km: parseFloat(geoDistKm.toFixed(1)),
+      time_delta_hours: parseFloat(timeDeltaHours.toFixed(1))
+    }
   };
 }
 
-// 5. Community Ring Detection & Edge Filtering
-export function detectFraudRings(cases: FraudCase[], floorThreshold: number = 0.30): { links: EvidenceLink[]; rings: FraudRing[] } {
+// Detect Fraud Rings via Community Graph Detection
+export function detectFraudRings(cases: FraudCase[], threshold: number = 0.30): { links: EvidenceLink[]; rings: FraudRing[] } {
   const links: EvidenceLink[] = [];
 
   for (let i = 0; i < cases.length; i++) {
     for (let j = i + 1; j < cases.length; j++) {
-      const link = computeEvidenceLink(cases[i], cases[j]);
-      if (link.combined_score >= floorThreshold) {
+      const link = evaluatePairwiseEvidence(cases[i], cases[j]);
+      if (link && (link.combined_score ?? 0) >= threshold) {
         links.push(link);
       }
     }
   }
 
-  // Graph Adjacency List for Connected Components / Louvain Clustering
-  const adjacency: Record<string, string[]> = {};
-  cases.forEach(c => adjacency[c.case_id] = []);
+  // Simple Graph Component Detector
+  const adj: Record<string, string[]> = {};
+  cases.forEach(c => adj[c.case_id] = []);
 
   links.forEach(l => {
-    adjacency[l.case_id_a].push(l.case_id_b);
-    adjacency[l.case_id_b].push(l.case_id_a);
+    const idA = l.case_id_a || l.source_case_id;
+    const idB = l.case_id_b || l.target_case_id;
+    if (idA && idB) {
+      if (!adj[idA]) adj[idA] = [];
+      if (!adj[idB]) adj[idB] = [];
+      adj[idA].push(idB);
+      adj[idB].push(idA);
+    }
   });
 
   const visited = new Set<string>();
-  const rawClusters: string[][] = [];
+  const rings: FraudRing[] = [];
 
   cases.forEach(c => {
-    if (!visited.has(c.case_id)) {
-      const cluster: string[] = [];
+    if (!visited.has(c.case_id) && adj[c.case_id] && adj[c.case_id].length > 0) {
+      const component: string[] = [];
       const queue = [c.case_id];
       visited.add(c.case_id);
 
       while (queue.length > 0) {
         const curr = queue.shift()!;
-        cluster.push(curr);
-
-        (adjacency[curr] || []).forEach(nbr => {
-          if (!visited.has(nbr)) {
-            visited.add(nbr);
-            queue.push(nbr);
+        component.push(curr);
+        (adj[curr] || []).forEach(neighbor => {
+          if (!visited.has(neighbor)) {
+            visited.add(neighbor);
+            queue.push(neighbor);
           }
         });
       }
 
-      if (cluster.length >= 2) {
-        rawClusters.push(cluster);
+      if (component.length >= 2) {
+        const memberCases = cases.filter(mc => component.includes(mc.case_id));
+        const totalAmount = memberCases.reduce((acc, mc) => acc + mc.amount, 0);
+        const cities = Array.from(new Set(memberCases.map(mc => mc.city)));
+        const avgRisk = Math.round(memberCases.reduce((acc, mc) => acc + mc.risk_score, 0) / memberCases.length);
+
+        const ringLinks = links.filter(l => component.includes(l.case_id_a || l.source_case_id) && component.includes(l.case_id_b || l.target_case_id));
+        const hasExactMatch = ringLinks.some(l => (l.exact_match_score ?? 0) > 0);
+        const hasScriptSim = ringLinks.some(l => (l.script_similarity_score ?? 0) > 0.45);
+
+        let evidenceType: EvidenceType = 'hard-identifier-linked';
+        if (!hasExactMatch && hasScriptSim) evidenceType = 'script-only-linked';
+        else if (hasExactMatch && hasScriptSim) evidenceType = 'hybrid';
+
+        const ringId = `RING-${Math.floor(100 + Math.random() * 900)}`;
+
+        rings.push({
+          ring_id: ringId,
+          ring_name: evidenceType === 'script-only-linked'
+            ? `Script-Only Linked Syndicate (${memberCases[0].scam_type})`
+            : `Mule Network Ring #${ringId}`,
+          primary_scam_pattern: memberCases[0].scam_type || 'Digital Arrest',
+          member_case_ids: component,
+          total_amount_at_risk: totalAmount,
+          customers_affected: memberCases.length,
+          risk_level: avgRisk >= 90 ? 'CRITICAL' : avgRisk >= 75 ? 'HIGH' : 'MEDIUM',
+          avg_risk_score: avgRisk,
+          cities: cities,
+          evidence_type: evidenceType,
+          created_at: new Date().toISOString()
+        });
       }
     }
-  });
-
-  // Convert clusters into FraudRing entities
-  const rings: FraudRing[] = rawClusters.map((memberIds, idx) => {
-    const memberCases = cases.filter(c => memberIds.includes(c.case_id));
-    const clusterLinks = links.filter(l => memberIds.includes(l.case_id_a) && memberIds.includes(l.case_id_b));
-
-    const hasHardIdentifier = clusterLinks.some(l => l.exact_match_score >= 0.8);
-    const hasScriptLink = clusterLinks.some(l => l.script_similarity_score >= 0.7);
-
-    let evidence_type: EvidenceType = 'mixed-evidence';
-    if (hasHardIdentifier && !hasScriptLink) {
-      evidence_type = 'hard-identifier-linked';
-    } else if (hasScriptLink && !hasHardIdentifier) {
-      evidence_type = 'script-only-linked';
-    } else if (hasHardIdentifier && hasScriptLink) {
-      evidence_type = 'mixed-evidence';
-    }
-
-    const totalAmount = memberCases.reduce((sum, c) => sum + c.amount, 0);
-    const cities = Array.from(new Set(memberCases.map(c => c.city)));
-    const avgRisk = Math.round(memberCases.reduce((sum, c) => sum + c.risk_score, 0) / memberCases.length);
-
-    let ringName = `Ring-${String.fromCharCode(65 + idx)}`;
-    if (evidence_type === 'script-only-linked') {
-      ringName = `CBI "Digital Arrest" Script Syndicate (${memberIds.length} Cases)`;
-    } else if (evidence_type === 'hard-identifier-linked') {
-      ringName = `Mule Device #${idx + 1} Hard-Linked Ring`;
-    } else {
-      ringName = `Mixed Multi-Signal Scam Syndicate #${idx + 1}`;
-    }
-
-    return {
-      ring_id: `RING-DETECTED-${idx + 1}`,
-      ring_name: ringName,
-      member_case_ids: memberIds,
-      evidence_type,
-      total_amount_at_risk: totalAmount,
-      customers_affected: memberCases.length,
-      primary_scam_pattern: memberCases[0]?.scam_type || 'Coordinated Fraud Ring',
-      cities,
-      avg_risk_score: avgRisk,
-      created_at: new Date().toISOString()
-    };
   });
 
   return { links, rings };
 }
 
-// 6. Recommendation & Reasoning Engine (LLM + Deterministic Fallback)
-export function generateRingRecommendation(ring: FraudRing, ringCases: FraudCase[], clusterLinks: EvidenceLink[]): Recommendation {
-  const avgCombinedScore = clusterLinks.length > 0
-    ? clusterLinks.reduce((acc, l) => acc + l.combined_score, 0) / clusterLinks.length
-    : 0.7;
+// Generate Ring Recommendation
+export function generateRingRecommendation(
+  ring: FraudRing,
+  memberCases: FraudCase[],
+  links: EvidenceLink[]
+): Recommendation {
+  const targetEntities: Array<{ type: 'UPI' | 'DEVICE' | 'BANK_AC' | 'PHONE'; value: string; role?: string }> = [];
 
-  // Target Entities
-  const upiList = Array.from(new Set(ringCases.map(c => c.upi_vpa).filter(Boolean)));
-  const deviceList = Array.from(new Set(ringCases.map(c => c.device_id).filter(Boolean)));
+  memberCases.forEach(c => {
+    if (c.upi_vpa) targetEntities.push({ type: 'UPI', value: c.upi_vpa, role: 'Primary Mule VPA' });
+    if (c.device_id) targetEntities.push({ type: 'DEVICE', value: c.device_id, role: 'Ingress Device' });
+    if (c.scammer_account_number) targetEntities.push({ type: 'BANK_AC', value: c.scammer_account_number, role: 'Destination Mule Account' });
+  });
 
-  const target_entities = [
-    ...upiList.map(v => ({ value: v, type: 'UPI VPA', role: 'Mule Destination' })),
-    ...deviceList.map(v => ({ value: v, type: 'Device ID', role: 'Ingress Point' }))
-  ];
-
-  // Deterministic Fallback Rule: Freeze if combined score >= 0.6 across >= 2 cases
-  let action: 'Freeze' | 'Monitor' | 'No Action' = 'Freeze';
-  if (avgCombinedScore < 0.4 || ringCases.length < 2) {
-    action = 'No Action';
-  } else if (avgCombinedScore < 0.6) {
-    action = 'Monitor';
-  }
-
-  let justification_text = '';
-  if (ring.evidence_type === 'script-only-linked') {
-    justification_text = `CRITICAL DETECTED SCRIPT PATTERN: These ${ringCases.length} victims share NO common phone numbers, UPI VPAs, or device IDs. However, all ${ringCases.length} call transcripts exhibit identical CBI/ED "Digital Arrest" script structure involving Officer Rakesh Sharma, fake FedEx drug seizure claims, and Supreme Court escrow demands. Compounding script similarity (score: ${(clusterLinks[0]?.script_similarity_score || 0.92).toFixed(2)}) across ${ring.cities.join(', ')} justifies immediate FREEZE on target mule escrow accounts to prevent further victim losses.`;
-  } else if (ring.evidence_type === 'hard-identifier-linked') {
-    justification_text = `HARD IDENTIFIER OVERLAP DETECTED: Direct physical device ID (${deviceList[0] || 'DEV-MULE'}) and destination UPI (${upiList[0] || 'mule@ybl'}) are shared across ${ringCases.length} distinct victim complaints across ${ring.cities.join(', ')}. Direct evidence warrants immediate FREEZE on destination accounts and blacklisting of device fingerprint.`;
-  } else {
-    justification_text = `MIXED MULTI-SIGNAL EVIDENCE: High multi-signal fusion score (${avgCombinedScore.toFixed(2)}) combining hard identifier overlap with script pattern similarity across ${ringCases.length} cases. Immediate FREEZE and law enforcement escalation recommended.`;
-  }
+  // Deduplicate
+  const uniqueEntities = Array.from(new Map(targetEntities.map(item => [item.value, item])).values());
 
   return {
     ring_id: ring.ring_id,
-    action,
-    target_entities,
-    justification_text,
-    confidence: Math.min(99, Math.round(avgCombinedScore * 100))
+    action: 'FREEZE_TARGET_VPAS',
+    target_entities: uniqueEntities,
+    justification_text: `Automated Multi-Signal Fusion Engine flagged ${ring.ring_name} across ${ring.cities.join(', ')} with total funds at risk ₹${(ring.total_amount_at_risk / 100000).toFixed(2)} Lakhs. Immediate emergency freeze enforced on destination mule accounts & VPAs.`,
+    confidence: 0.94
   };
 }
 
-// 7. Investigator Intelligence Case Report Generator
-export function generateCaseReport(ring: FraudRing, ringCases: FraudCase[], recommendation: Recommendation): CaseReport {
-  const freeze_table = recommendation.target_entities.map(e => ({
-    entity: e.value,
-    type: e.type,
-    risk_level: ring.avg_risk_score > 90 ? 'CRITICAL (HIGH RISK)' : 'ELEVATED',
-    rationale: `Linked to ${ring.ring_name} across ${ring.customers_affected} victims (${e.role})`,
-    suggested_action: recommendation.action === 'Freeze' ? 'IMMEDIATE ACCT FREEZE & HOTLIST' : 'MONITOR FOR CASH OUT'
-  }));
-
-  const summary_text = `INTELLIGENCE PACKAGE: ${ring.ring_name} comprises ${ring.customers_affected} coordinated cybercrime complaints targeting victims across ${ring.cities.join(', ')} with total funds at risk of ₹${(ring.total_amount_at_risk / 100000).toFixed(2)} Lakhs. Primary scam vector is ${ring.primary_scam_pattern}.`;
-
-  const escalation_note = `INVESTIGATOR HANDOFF NOTE: This intelligence package was compiled automatically by RingBreaker via multi-signal fusion analytics. Recommended for immediate submission to Bank Fraud Risk Operations, CERT-In, and Cyber Crime Police Cell for account freezing.`;
-
+// Generate Investigator Case Report
+export function generateCaseReport(
+  ring: FraudRing,
+  memberCases: FraudCase[],
+  rec: Recommendation
+): CaseReport {
   return {
-    report_id: `RPT-${ring.ring_id}-${Date.now().toString().slice(-4)}`,
+    report_id: `REP-WB-${Math.floor(1000 + Math.random() * 9000)}`,
+    generated_at: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
     ring_id: ring.ring_id,
-    generated_at: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-    summary_text,
-    customers_affected: ring.customers_affected,
+    ring_name: ring.ring_name,
     total_amount_at_risk: ring.total_amount_at_risk,
-    freeze_table,
-    escalation_note
+    customers_affected: ring.customers_affected,
+    summary_text: `Investigator Intelligence Package for ${ring.ring_name}. System detected ${memberCases.length} linked complaints across ${ring.cities.join(', ')} totaling ₹${(ring.total_amount_at_risk / 100000).toFixed(2)} Lakhs. Pattern analysis indicates ${ring.primary_scam_pattern}.`,
+    freeze_table: rec.target_entities.map(e => ({
+      entity: e.value,
+      type: e.type,
+      risk_level: 'CRITICAL',
+      rationale: `Flagged via multi-signal fusion engine as ${e.role || 'Primary Target Mule Entity'}`,
+      suggested_action: 'ENFORCE_IMMEDIATE_DEBIT_FREEZE'
+    })),
+    escalation_note: 'Forwarded to West Bengal Police Cyber Crime Wing, Bank Fraud Operations, and CERT-In.'
   };
 }
