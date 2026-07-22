@@ -21,7 +21,6 @@ interface MainAppProps {
   userRole: 'analyst' | 'police';
 }
 
-// Dynamic API Endpoint: Uses relative /api on Vercel or localhost:5000 in dev
 const API_BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
   ? '/api'
   : 'http://localhost:5000/api';
@@ -32,10 +31,20 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
   const [serverLinks, setServerLinks] = useState<EvidenceLink[]>([]);
   const [currentView, setCurrentView] = useState<ViewMode>('map');
   const [language, setLanguage] = useState<'en' | 'bn'>('en');
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
   const [selectedRing, setSelectedRing] = useState<FraudRing | null>(null);
   const [selectedCase, setSelectedCase] = useState<FraudCase | null>(null);
   const [activeReport, setActiveReport] = useState<CaseReport | null>(null);
+
+  // Sync Dark Mode class on <html> element
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   // Filter State
   const [filters, setFilters] = useState<FilterState>({
@@ -70,7 +79,6 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
     fetchBackendData();
   }, []);
 
-  // Calculate dynamic links & rings if server response pending
   const fallbackEngine = useMemo(() => {
     return detectFraudRings(cases, 0.30);
   }, [cases]);
@@ -123,7 +131,6 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
     return rbacRings.reduce((acc, r) => acc + r.total_amount_at_risk, 0);
   }, [rbacRings]);
 
-  // Dynamic Total Reports Counter (matches 6893 + newly added cases)
   const totalReportCount = useMemo(() => {
     return 6893 + (cases.length - INITIAL_CASES.length);
   }, [cases]);
@@ -158,7 +165,7 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-rose-500 selection:text-white pb-16">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0D1527] text-slate-900 dark:text-white flex flex-col font-sans selection:bg-rose-500 selection:text-white pb-16 transition-colors">
       {/* Top Header Navigation */}
       <Header
         currentView={currentView}
@@ -168,15 +175,18 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
         totalAtRisk={totalAmountAtRisk}
         language={language}
         onToggleLanguage={() => setLanguage(l => l === 'bn' ? 'en' : 'bn')}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={() => setIsDarkMode(prev => !prev)}
       />
 
       {/* RBAC Role Indicator Banner */}
-      <div className="bg-slate-900 text-white text-xs px-6 py-1.5 flex items-center justify-between border-b border-slate-800 font-mono">
+      <div className="bg-slate-900 text-white text-xs px-6 py-2 flex items-center justify-between border-b border-slate-800 font-mono">
         <span className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${userRole === 'analyst' ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-          LOGGED IN ROLE: <strong className="uppercase text-rose-400">{userRole === 'analyst' ? 'Bank Analyst (30% Scope)' : 'Police Admin (100% Scope)'}</strong>
+          <span className={`w-2.5 h-2.5 rounded-full ${userRole === 'analyst' ? 'bg-amber-400 shadow-amber-400/50' : 'bg-emerald-400 shadow-emerald-400/50'} shadow-sm`} />
+          LOGGED IN ROLE: <strong className="uppercase text-rose-400">{userRole === 'analyst' ? 'Bank Analyst (30% Scope Scope)' : 'Police Admin (100% Full Scope)'}</strong>
+          <span className="text-slate-400 text-[11px]">({userRole === 'analyst' ? `${rbacCases.length} Cases` : `${rbacCases.length} Cases (State-wide)`})</span>
         </span>
-        <a href="/login" className="text-slate-400 hover:text-white underline">Switch Role / Logout</a>
+        <a href="/login" className="text-slate-300 hover:text-white underline font-bold">Switch Role / Logout</a>
       </div>
 
       {/* Filter Controls Bar */}

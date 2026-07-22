@@ -1,6 +1,6 @@
 import React from 'react';
 import { CaseReport } from '../types/fraud';
-import { X, Printer, ShieldCheck, CheckCircle } from 'lucide-react';
+import { Shield, Download, X, CheckCircle, Lock } from 'lucide-react';
 
 interface CaseReportModalProps {
   report: CaseReport | null;
@@ -13,123 +13,132 @@ export const CaseReportModal: React.FC<CaseReportModalProps> = ({
 }) => {
   if (!report) return null;
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrintOrDownload = () => {
+    const reportText = `
+# CHAKRAVYUH LAW ENFORCEMENT AGENCY (LEA) SUBPOENA REPORT
+Generated on: ${new Date(report.generated_at).toLocaleString()}
+Report Reference ID: ${report.report_id}
+
+## RING INTELLIGENCE OVERVIEW
+- Ring ID: ${report.ring_id}
+- Syndicate Name: ${report.ring_name || 'Project Chakravyuh Fraud Syndicate'}
+- Total Amount at Risk: ₹${report.total_amount_at_risk.toLocaleString('en-IN')}
+- Affected Citizens: ${report.customers_affected} Victims
+
+## SUMMARY STATEMENT
+${report.summary_text}
+
+## IDENTIFIED MULE ACCOUNTS & TARGETED FREEZE TABLE
+${report.freeze_table.map((row, i) => `${i + 1}. [${row.type}] ${row.entity} - ${row.suggested_action} (${row.rationale})`).join('\n')}
+
+## LEA ESCALATION DIRECTIVE
+${report.escalation_note}
+
+---
+Project Chakravyuh DPDP Compliance Clearance. Confidential Legal Subpoena.
+    `.trim();
+
+    const blob = new Blob([reportText], { type: 'text/markdown' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Chakravyuh_Subpoena_Report_${report.ring_id}.md`;
+    a.click();
   };
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-[1000] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 font-sans select-none overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden my-8 animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="bg-slate-900 text-white p-6 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-rose-600/20 text-rose-500 border border-rose-500/30 flex items-center justify-center font-bold">
+              <Shield className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold text-emerald-700">
-                  {report.report_id}
-                </span>
-                <span className="text-[10px] bg-gray-100 text-slate-600 px-2 py-0.5 rounded font-mono">
-                  {report.generated_at}
-                </span>
-              </div>
-              <h3 className="font-extrabold text-slate-900 text-base font-display">
-                Investigator Intelligence Report
-              </h3>
+              <span className="text-[10px] font-mono text-rose-400 font-extrabold tracking-widest uppercase block">
+                Official LEA Intelligence Report
+              </span>
+              <h3 className="text-lg font-extrabold font-display">{report.ring_name || 'Fraud Syndicate Subpoena'}</h3>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow-xs transition-colors"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print / Export PDF</span>
-            </button>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-slate-800 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Content Body */}
+        <div className="p-6 space-y-6 text-slate-900 dark:text-white max-h-[70vh] overflow-y-auto">
+          {/* Key Metrics grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
+            <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-gray-200 dark:border-slate-800">
+              <span className="text-gray-400 text-[10px] uppercase block">Ring ID</span>
+              <strong className="text-rose-600 font-extrabold">{report.ring_id}</strong>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-gray-200 dark:border-slate-800">
+              <span className="text-gray-400 text-[10px] uppercase block">Total at Risk</span>
+              <strong className="text-rose-600 font-extrabold">₹{(report.total_amount_at_risk / 100000).toFixed(2)}L</strong>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-gray-200 dark:border-slate-800">
+              <span className="text-gray-400 text-[10px] uppercase block">Affected Victims</span>
+              <strong className="text-slate-900 dark:text-white font-extrabold">{report.customers_affected} Citizens</strong>
+            </div>
+          </div>
+
+          {/* Mule VPAs Section */}
+          <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-gray-200 dark:border-slate-800 space-y-3">
+            <h4 className="text-xs font-extrabold font-mono uppercase text-rose-500 flex items-center gap-1.5">
+              <Lock className="w-4 h-4" /> Targeted Mule Accounts & VPAs Freeze Directive
+            </h4>
+            <div className="space-y-2 font-mono text-xs">
+              {report.freeze_table.map((row, idx) => (
+                <div key={idx} className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-rose-500 font-bold block">{row.entity} ({row.type})</span>
+                    <span className="text-[11px] text-gray-500 dark:text-slate-400">{row.rationale}</span>
+                  </div>
+                  <span className="bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded text-[10px] font-bold border border-rose-200 dark:border-rose-900">
+                    {row.suggested_action}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Escalation Directive */}
+          <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-gray-200 dark:border-slate-800 space-y-1">
+            <h4 className="text-xs font-extrabold font-mono uppercase text-slate-500 dark:text-slate-400">
+              Cyber Cell Escalation Directive
+            </h4>
+            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-mono">
+              {report.escalation_note}
+            </p>
           </div>
         </div>
 
-        {/* Report Content */}
-        <div className="p-6 overflow-y-auto max-h-[75vh] space-y-5 text-xs">
-          {/* Handoff Notice Banner */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-bold text-emerald-900 text-xs uppercase tracking-wider">
-                Investigator Handoff Package Ready
-              </h4>
-              <p className="text-[11px] text-emerald-700 mt-0.5">
-                Formatted for bank fraud operations, law enforcement cyber cell submission, and CERT-In notification.
-              </p>
-            </div>
-          </div>
+        {/* Footer Controls */}
+        <div className="p-5 bg-slate-50 dark:bg-slate-950 border-t border-gray-200 dark:border-slate-800 flex items-center justify-between">
+          <span className="text-[11px] font-mono text-gray-400">DPDP Encrypted Legal Document</span>
 
-          {/* Executive Summary */}
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2">
-            <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">
-              Executive Intelligence Summary
-            </h4>
-            <p className="text-slate-800 leading-relaxed font-mono">
-              {report.summary_text}
-            </p>
-            <div className="pt-2 flex items-center justify-between text-slate-600 text-[11px] font-mono border-t border-gray-200">
-              <span>Affected Victims: <strong className="text-slate-900">{report.customers_affected}</strong></span>
-              <span>Total Funds At Risk: <strong className="text-rose-700 font-bold">₹{(report.total_amount_at_risk / 100000).toFixed(2)} Lakhs</strong></span>
-            </div>
-          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-bold text-gray-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            >
+              Close
+            </button>
 
-          {/* Account Freeze & Target Entity Table */}
-          <div>
-            <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-2">
-              Actionable Account Freeze & Target Entity Table
-            </h4>
-            <div className="overflow-x-auto rounded-xl border border-gray-200">
-              <table className="w-full text-left border-collapse font-mono">
-                <thead>
-                  <tr className="bg-gray-100 text-slate-700 text-[10px] uppercase border-b border-gray-200">
-                    <th className="p-3">Target Entity</th>
-                    <th className="p-3">Type</th>
-                    <th className="p-3">Risk Level</th>
-                    <th className="p-3">Rationale</th>
-                    <th className="p-3">Action Required</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {report.freeze_table.map((row, i) => (
-                    <tr key={i} className="hover:bg-gray-50">
-                      <td className="p-3 font-bold text-rose-700">{row.entity}</td>
-                      <td className="p-3 text-slate-700">{row.type}</td>
-                      <td className="p-3">
-                        <span className="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px] font-bold border border-rose-200">
-                          {row.risk_level}
-                        </span>
-                      </td>
-                      <td className="p-3 text-slate-600 text-[11px] max-w-[200px] truncate">{row.rationale}</td>
-                      <td className="p-3 font-bold text-emerald-700">{row.suggested_action}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Escalation & Disclaimer Note */}
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-1">
-            <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px]">
-              Law Enforcement Escalation Protocol
-            </h4>
-            <p className="text-slate-600 text-[11px]">
-              {report.escalation_note}
-            </p>
+            <button
+              onClick={handlePrintOrDownload}
+              className="bg-rose-600 hover:bg-rose-500 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-rose-950/40"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export LEA Subpoena (.MD)</span>
+            </button>
           </div>
         </div>
       </div>
