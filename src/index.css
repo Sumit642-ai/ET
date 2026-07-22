@@ -222,10 +222,6 @@ body {
   transform: translateY(-2px);
 }
 
-.namma-bottom-capsule:active {
-  transform: translateY(0);
-}
-
 .namma-bottom-stat-btn {
   width: 48px;
   height: 52px;
@@ -247,47 +243,12 @@ body {
   background-color: #f8fafc;
 }
 
-.namma-bottom-stat-btn:active {
-  transform: translateY(0);
-}
-
-/* NammaKasa Cluster Bubbles */
-.namma-cluster-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: #ffffff;
-  font-weight: 800;
-  font-family: var(--font-display);
-  background: #7a1c1c;
-  border: 2px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.namma-cluster-icon:hover {
-  transform: scale(1.18);
-  background: #900c3f;
-  z-index: 1000 !important;
-}
-
-.cluster-lg {
-  width: 52px !important;
-  height: 52px !important;
-  font-size: 1.15rem;
-}
-
-.cluster-md {
-  width: 42px !important;
-  height: 42px !important;
-  font-size: 0.95rem;
-}
-
-.cluster-sm {
-  width: 32px !important;
-  height: 32px !important;
-  font-size: 0.85rem;
+/* NammaKasa Dark Maroon Circles Hover Effect */
+.namma-maroon-circle:hover {
+  transform: scale(1.18) !important;
+  background-color: #900c3f !important;
+  z-index: 9999 !important;
+  box-shadow: 0 8px 24px rgba(122, 28, 28, 0.4) !important;
 }
 
 /* Map Canvas Container */
@@ -307,48 +268,6 @@ body {
 
 .leaflet-control-zoom {
   display: none !important;
-}
-
-/* Floating Stats Card on Map */
-.namma-map-stats {
-  position: absolute;
-  top: 18px;
-  left: 20px;
-  z-index: 999;
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 8px 18px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  border: 1px solid #f1f5f9;
-}
-
-.namma-map-stats .stat-item {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.namma-map-stats .stat-val {
-  font-size: 1.2rem;
-  font-weight: 800;
-  font-family: var(--font-display);
-}
-
-.namma-map-stats .stat-val-active {
-  color: #dc2626;
-}
-
-.namma-map-stats .stat-val-total {
-  color: #d97706;
-}
-
-.namma-map-stats .stat-lbl {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
 }
 
 /* Custom Scrollbars */
