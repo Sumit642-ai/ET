@@ -19,19 +19,19 @@ import { BottomNav } from './components/BottomNav';
 
 interface MainAppProps {
   userRole: 'analyst' | 'police';
+  onRoleChange: (role: 'analyst' | 'police') => void;
 }
 
 const API_BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
   ? '/api'
   : 'http://localhost:5000/api';
 
-const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
+const MainApplication: React.FC<MainAppProps> = ({ userRole, onRoleChange }) => {
   const [cases, setCases] = useState<FraudCase[]>(INITIAL_CASES);
   const [serverRings, setServerRings] = useState<FraudRing[]>([]);
   const [serverLinks, setServerLinks] = useState<EvidenceLink[]>([]);
   const [currentView, setCurrentView] = useState<ViewMode>('map');
   const [language, setLanguage] = useState<'en' | 'bn'>('en');
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
   const [selectedRing, setSelectedRing] = useState<FraudRing | null>(null);
   const [selectedCase, setSelectedCase] = useState<FraudCase | null>(null);
@@ -39,12 +39,8 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
 
   // Sync Dark Mode class on <html> element
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    document.documentElement.classList.add('dark');
+  }, []);
 
   // Filter State
   const [filters, setFilters] = useState<FilterState>({
@@ -55,7 +51,7 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
     selectedCity: 'all'
   });
 
-  // Fetch Cases and Rings from Express Backend Server
+  // Fetch Cases and Rings from Backend API
   const fetchBackendData = async () => {
     try {
       const resCases = await fetch(`${API_BASE}/cases`);
@@ -71,7 +67,7 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
         setServerLinks(dataRings.links);
       }
     } catch (err) {
-      console.warn('[Chakravyuh Frontend] Backend API offline. Using high-density fallback seed dataset.', err);
+      console.warn('[ChakraView Frontend] Backend API offline. Using high-density fallback seed dataset.', err);
     }
   };
 
@@ -86,7 +82,7 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
   const activeRings = serverRings.length > 0 ? serverRings : fallbackEngine.rings;
   const activeLinks = serverLinks.length > 0 ? serverLinks : fallbackEngine.links;
 
-  // Role-Based Access Control (RBAC): Analyst gets 30% view scope, Police Admin gets 100%
+  // Role-Based Access Control (RBAC): Analyst gets 30% institution scope, Police Admin gets 100%
   const rbacCases = useMemo(() => {
     if (userRole === 'analyst') {
       const sliceCount = Math.max(5, Math.ceil(cases.length * 0.30));
@@ -165,8 +161,8 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0D1527] text-slate-900 dark:text-white flex flex-col font-sans selection:bg-rose-500 selection:text-white pb-16 transition-colors">
-      {/* Top Header Navigation */}
+    <div className="min-h-screen bg-[#0B101E] text-white flex flex-col font-sans selection:bg-rose-600 selection:text-white pb-16 transition-colors">
+      {/* Top Header Navigation with Role Dropdown */}
       <Header
         currentView={currentView}
         onViewChange={setCurrentView}
@@ -175,18 +171,18 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
         totalAtRisk={totalAmountAtRisk}
         language={language}
         onToggleLanguage={() => setLanguage(l => l === 'bn' ? 'en' : 'bn')}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={() => setIsDarkMode(prev => !prev)}
+        userRole={userRole}
+        onRoleChange={onRoleChange}
       />
 
       {/* RBAC Role Indicator Banner */}
-      <div className="bg-slate-900 text-white text-xs px-6 py-2 flex items-center justify-between border-b border-slate-800 font-mono">
+      <div className="bg-[#1A2235] text-white text-xs px-6 py-2 flex items-center justify-between border-b border-slate-800 font-mono">
         <span className="flex items-center gap-2">
           <span className={`w-2.5 h-2.5 rounded-full ${userRole === 'analyst' ? 'bg-amber-400 shadow-amber-400/50' : 'bg-emerald-400 shadow-emerald-400/50'} shadow-sm`} />
-          LOGGED IN ROLE: <strong className="uppercase text-rose-400">{userRole === 'analyst' ? 'Bank Analyst (30% Scope Scope)' : 'Police Admin (100% Full Scope)'}</strong>
+          CURRENT ROLE SCOPE: <strong className="uppercase text-rose-400">{userRole === 'analyst' ? 'Bank Analyst (30% Scope)' : 'Police Admin (100% Full Scope)'}</strong>
           <span className="text-slate-400 text-[11px]">({userRole === 'analyst' ? `${rbacCases.length} Cases` : `${rbacCases.length} Cases (State-wide)`})</span>
         </span>
-        <a href="/login" className="text-slate-300 hover:text-white underline font-bold">Switch Role / Logout</a>
+        <a href="/login" className="text-slate-400 hover:text-white underline font-bold">Switch Role / Logout</a>
       </div>
 
       {/* Filter Controls Bar */}
@@ -282,19 +278,19 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
 
 export const App: React.FC = () => {
   const [userRole, setUserRole] = useState<'analyst' | 'police'>(() => {
-    return (localStorage.getItem('chakravyuh_user_role') as any) || 'analyst';
+    return (localStorage.getItem('chakraview_user_role') as any) || 'analyst';
   });
 
-  const handleLogin = (role: 'analyst' | 'police') => {
+  const handleRoleChange = (role: 'analyst' | 'police') => {
     setUserRole(role);
-    localStorage.setItem('chakravyuh_user_role', role);
+    localStorage.setItem('chakraview_user_role', role);
   };
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginScreen onLogin={handleLogin} />} />
-        <Route path="/" element={<MainApplication userRole={userRole} />} />
+        <Route path="/login" element={<LoginScreen onLogin={handleRoleChange} />} />
+        <Route path="/" element={<MainApplication userRole={userRole} onRoleChange={handleRoleChange} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
