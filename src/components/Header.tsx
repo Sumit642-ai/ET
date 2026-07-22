@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ViewMode } from '../types/fraud';
-import { Shield, Sparkles, Mail, X, Lock } from 'lucide-react';
+import { Shield, Mail, X } from 'lucide-react';
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -17,11 +17,10 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleLanguage
 }) => {
   const [showNotification, setShowNotification] = useState(true);
-  const [showTooltip, setShowTooltip] = useState(true);
 
   return (
     <header className="w-full bg-white select-none shadow-xs font-sans z-50">
-      {/* 1. Top Pink Announcement Bar (Exact Spec: "Join 593 Bengalureans on the Monday digest") */}
+      {/* 1. Top Pink Announcement Bar */}
       {showNotification && (
         <div className="namma-digest-bar">
           <div className="flex items-center gap-2 max-w-7xl mx-auto w-full">
@@ -54,33 +53,15 @@ export const Header: React.FC<HeaderProps> = ({
           </a>
         </div>
 
-        {/* Right: Language Toggle Pill Button ('বাংলা' / 'English') with Floating Caret Tooltip */}
+        {/* Right: English Language Pill Button */}
         <div className="relative">
           <button
             onClick={onToggleLanguage}
             className="namma-lang-btn font-sans"
+            title="Current Language: English"
           >
-            {language === 'bn' ? 'বাংলা' : 'English'}
+            English
           </button>
-
-          {/* Caret Floating Dark Tooltip ("বাংলায় ব্যবহার করুন") */}
-          {showTooltip && (
-            <div className="namma-tooltip-box">
-              <div className="namma-tooltip-caret" />
-              <div className="namma-tooltip-content">
-                <span>বাংলায় ব্যবহার করুন</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowTooltip(false);
-                  }}
-                  className="text-slate-400 hover:text-white"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </header>

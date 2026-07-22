@@ -31,7 +31,7 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
   const [serverRings, setServerRings] = useState<FraudRing[]>([]);
   const [serverLinks, setServerLinks] = useState<EvidenceLink[]>([]);
   const [currentView, setCurrentView] = useState<ViewMode>('map');
-  const [language, setLanguage] = useState<'en' | 'bn'>('bn');
+  const [language, setLanguage] = useState<'en' | 'bn'>('en');
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
   const [selectedRing, setSelectedRing] = useState<FraudRing | null>(null);
   const [selectedCase, setSelectedCase] = useState<FraudCase | null>(null);
