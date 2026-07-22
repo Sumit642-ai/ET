@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// In-memory data store for hackathon portability
+// In-memory data store for hackathon portability & serverless execution
 let cases = generateSeedCases();
 let { links, rings } = detectRingsFromCases(cases, 0.40);
 
@@ -83,6 +83,10 @@ app.post('/api/cases', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Chakravyuh Express Server running at http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Chakravyuh Express Server running at http://localhost:${PORT}`);
+  });
+}
+
+export default app;

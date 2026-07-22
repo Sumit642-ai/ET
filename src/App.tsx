@@ -21,7 +21,10 @@ interface MainAppProps {
   userRole: 'analyst' | 'police';
 }
 
-const API_BASE = 'http://localhost:5000/api';
+// Dynamic API Endpoint: Uses relative /api on Vercel or localhost:5000 in dev
+const API_BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? '/api'
+  : 'http://localhost:5000/api';
 
 const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
   const [cases, setCases] = useState<FraudCase[]>(INITIAL_CASES);
@@ -43,7 +46,7 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole }) => {
     selectedCity: 'all'
   });
 
-  // Fetch Cases and Rings from Express Backend Server (http://localhost:5000/api)
+  // Fetch Cases and Rings from Express Backend Server
   const fetchBackendData = async () => {
     try {
       const resCases = await fetch(`${API_BASE}/cases`);
