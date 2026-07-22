@@ -1,55 +1,53 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Fix Leaflet default icon paths in Vite
+// Fix Leaflet marker icon asset paths for Vite/Vercel production bundler
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-interface Props {
-  children: ReactNode;
-}
+// Production Error Boundary to prevent white screen crashes
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
 
-interface State {
-  hasError: boolean;
-  error: Error | null;
-}
-
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-  };
-
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error in RingBreaker App:', error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[Chakravyuh React ErrorBoundary]', error, errorInfo);
   }
 
-  public render() {
+  render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
-          <div className="bg-slate-900 border border-rose-500/50 p-6 rounded-2xl max-w-lg shadow-2xl space-y-4">
-            <h2 className="text-xl font-bold text-rose-400">RingBreaker Console Error</h2>
-            <p className="text-xs text-slate-300 font-mono bg-slate-950 p-3 rounded border border-slate-800">
-              {this.state.error?.toString()}
+        <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-6 text-center font-sans">
+          <div className="bg-slate-950 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-4">
+            <div className="w-12 h-12 bg-rose-600/20 text-rose-500 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold">
+              ⚠️
+            </div>
+            <h2 className="text-xl font-extrabold text-rose-500 font-display">Chakravyuh Workspace Notice</h2>
+            <p className="text-xs text-slate-300">
+              {this.state.error?.message || 'An application runtime error occurred.'}
             </p>
             <button
-              onClick={() => window.location.reload()}
-              className="bg-rose-600 hover:bg-rose-500 text-white font-bold px-4 py-2 rounded-xl text-xs"
+              onClick={() => {
+                localStorage.clear();
+                window.location.href = '/';
+              }}
+              className="bg-rose-600 hover:bg-rose-500 text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-colors shadow-lg shadow-rose-950/50"
             >
-              Reload Application
+              Reset & Reload Workspace
             </button>
           </div>
         </div>
