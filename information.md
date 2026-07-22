@@ -1,153 +1,121 @@
-# RingBreaker West Bengal: AI Fraud Ring Detection Platform
-> **ET AI Hackathon 2026 — Problem Statement 6**  
-> *1:1 NammaKasa Pixel-Perfect Interactive Map & Multi-Signal Fraud Syndicate Intelligence Engine*
+# Project Information & Technical Documentation — ChakraView
+
+**Project Title:** ChakraView — AI Multi-Signal Fraud Ring Detection Platform  
+**Target Platform:** Law Enforcement Agencies (LEA) & Enterprise Banking SOC Consoles  
+**Repository:** [https://github.com/Sumit642-ai/ET.git](https://github.com/Sumit642-ai/ET.git)  
+**Live Vercel Deployment:** [https://et-neon.vercel.app](https://et-neon.vercel.app)  
 
 ---
 
-## 📌 Executive Overview
+## 1. System Overview
 
-**RingBreaker West Bengal** is an advanced AI-powered fraud ring detection and civic complaint mapping platform designed to uncover sophisticated digital arrest, customs seizure, and task-fraud syndicates. Inspired by the **Namma Kasa** interactive map design, the application combines high-density civic visualization with a multi-signal graph intelligence engine capable of identifying crime rings—even when scammers rotate phone numbers, UPI VPAs, and bank accounts to avoid simple exact-match detection.
-
----
-
-## 🚀 Key Features & Capabilities
-
-### 1. 1:1 NammaKasa Visual Design System
-- **Pixel-Perfect Header Bar**: Features the dual-color brand logo (`Namma` in black, `ಕಸ` in red), version badge (`v1.3.5`), top pink digest notification bar (`✉ Join 593 Bengalureans...`), and language selector button (`বাংলা` / `English`) with a floating caret tooltip (*"বাংলায় ব্যবহার করুন"*).
-- **Interactive Light Map View**: Light CartoDB Positron map canvas pre-seeded with West Bengal ward & district administrative boundaries.
-- **Choropleth Polygon Mesh & Hover Highlights**: Light pastel pink ward polygons (`#FCA5A5`) that dynamically highlight with a thick deep crimson border (`#DC2626`, `3.5px` stroke, `0.65 fill opacity`) upon mouse hover or selection.
-- **NammaKasa Dark Maroon Circle Bubbles**: Distinctive maroon circles (`#7A1C1C` fill, `2px` crisp white border) displaying active report counts (`452`, `690`, `767`, `409`, `351`, `182`, `274`, `320`, `435`, `794`, `280`, `205`, `58`). Circle sizes dynamically scale based on report volume, with synchronized hover scaling (`scale(1.18)` + red glow).
-- **Top-Left Stats Badge**: Floating white card showing active high-urgency threats (`6893 Active | 7160 Reports`).
-- **Bottom-Left Active Ward Inspector**: Real-time inspector card displaying the hovered/selected ward, sub-division, and active report tally.
-- **Floating Bottom Capsule Bar**: Floating dark navy capsule (`#0D1527`, centered `📱 Scan QR to Report` button) alongside a standalone white stat badge (`6893`).
+**ChakraView** solves the problem of syndicated cybercrime in India by fusing disparate fraud complaint signals into real-time actionable crime ring clusters. It is customized for West Bengal and Greater Kolkata Metro with synthetic data seeded using real locations (Kolkata Central, Salt Lake Sector V, New Town, Howrah, Siliguri, Asansol).
 
 ---
 
-## 📝 Structured Complaint Intake Form Schema
+## 2. Component & Workspace Directory Structure
 
-The Complaint Form strictly enforces 12 structured fields for DPDP PII compliance and multi-signal fusion analysis:
-
-| # | Field Name | Description / Format | Compliance Purpose |
-|---|---|---|---|
-| 1 | **Internal Case ID / Customer ID** | `CUST-88990022` | Replaces victim name for DPDP compliance and PII avoidance |
-| 2 | **Scammer Bank Account Number** | `ACCT-9900112233` | Hard identifier matching across mule account networks |
-| 3 | **Bank IFSC Code** | `UTIB0000123` | Identifies destination mule bank branch |
-| 4 | **Destination UPI VPA** | `clearance.supreme.court@okaxis` | Exact-match VPA linkage scoring |
-| 5 | **Scammer Phone Number** | `+91 98301 22998` | Telecom SIM box & WhatsApp call correlation |
-| 6 | **Ingress Device ID** | `DEV-NEW-9988` | Hardware fingerprint & IMEI correlation |
-| 7 | **IP Address** | `103.211.89.55` | Subnet & VPN proxy detection |
-| 8 | **Amount at Risk (₹)** | `2,40,0000` | Financial impact aggregation in ₹ Lakhs |
-| 9 | **Incident Timestamp (Date & Time)** | `YYYY-MM-DDTHH:MM` | Spatiotemporal velocity calculation |
-| 10 | **City / District** | `Kolkata`, `Howrah`, `Siliguri` | Regional hotspot mapping |
-| 11 | **Pin Code** | `700017` | Fine-grained civic postal boundary mapping |
-| 12 | **Call Transcript / Statement** | Unstructured Text Box | NLP Cosine Similarity script embedding analysis |
-
----
-
-## 🔍 Page-by-Page & Component Breakdown
-
-### 1. Header Navigation (`src/components/Header.tsx`)
-- **Brand Identity**: Dual-language typography matching the original NammaKasa reference.
-- **Language Switcher**: Toggle between English and Bengali (`বাংলা`). Includes a sleek dark tooltip pointing to the language button.
-- **Top Pink Digest Bar**: Displays live community updates and active scam advisories across West Bengal.
-
-### 2. Filter Toolbar (`src/components/FilterBar.tsx`)
-- **Dropdown Filters**:
-  - `Severity Filter`: Filter complaints by Risk Score (`All`, `Critical >90`, `High 75-90`, `Medium 50-75`, `Low <50`).
-  - `Status Filter`: Filter by case status (`All`, `Active Under Investigation`, `Frozen`, `Resolved`).
-  - `Linkage Type`: Filter by connection signal (`Hard Identifier Linked` vs `Script-Only Linked`).
-  - `City / District Filter`: Filter specifically by West Bengal cities (`Kolkata`, `Howrah`, `Siliguri`, `Asansol`, `Durgapur`, `Malda`, `Kharagpur`).
-  - `Search Bar`: Real-time text search across victim names, UPI VPAs, device IDs, and call transcript text.
-- **View Switcher Pill**: Toggle seamlessly between `Map`, `List`, `Graph`, and `Reports` views.
-
-### 3. Interactive Map Workspace (`src/components/NammakasaMapView.tsx`)
-- **Base Map**: Light greyscale CartoDB tiles.
-- **District Boundary Mesh**: Multi-polygon overlay representing Kolkata Municipal Corporation wards and West Bengal districts.
-- **Interactive Hover & Sync**: Moving the cursor over a polygon or maroon bubble highlights the district border, enlarges the circle, and updates the bottom-left ward card instantly.
-- **Map Controls**: Stacked white controls (`Locate Me`, `Zoom In (+)`, `Zoom Out (-)`).
-
-### 4. Network Graph View (`src/components/NetworkGraphView.tsx`)
-- **Force-Directed Graph**: 2D HTML5 Canvas engine visualising nodes (Victims, Mule VPAs, Devices, Script Signatures) and weighted links.
-- **Node Classification**:
-  - 🔴 **Red Nodes**: High-risk crime syndicates / Mule VPAs.
-  - 🟡 **Amber Nodes**: Script-only linked rotators (zero shared identifiers).
-  - 🔵 **Blue Nodes**: Individual victim complaints.
-- **Interactive Controls**: Drag nodes, pan canvas, zoom, and click any node to open investigator drawer.
-
-### 5. List & Reports Workspace (`src/components/ListView.tsx`)
-- **Clean Light UI Card Grid**: White background cards (`#FFFFFF`) with subtle borders (`#E2E8F0`) and soft shadows (`shadow-sm`).
-- **Tab Switcher**: Toggle between **All Fraud Complaints** and **Detected Fraud Rings**.
-- **Card Metrics**: Displays Case ID badge (`CASE-2026-xxx`), Risk Score, Internal Customer ID, Ward/Location, Amount at Risk (in ₹ Lakhs), Destination UPI VPA, and Transcript excerpt.
-
-### 6. Scan QR & Report Complaint Modal (`src/components/CaseIntakeModal.tsx`)
-- 📷 **Camera QR Scanner Tab**:
-  - **Live Webcam Integration**: Streams actual webcam feed via `navigator.mediaDevices.getUserMedia`.
-  - **Interactive QR Simulation**: Clicking **"Scan QR Code Now"** triggers a scanning animation, auto-verifies the QR code, auto-detects Kolkata Ward 46 (Burrabazar Escrow Scam), adds the complaint live to the map, fires celebratory confetti, and increments the report counter (`6893` ➔ `6894`).
-- 📝 **Complaint Intake Form Tab**:
-  - Contains all 12 structured fields listed above.
-- ⚡ **Hackathon Judge Demo Script Button**:
-  - One-click auto-fill pre-loaded with a CBI Digital Arrest scam transcript for rapid hackathon evaluation.
-
-### 7. Ring Intelligence Drawer (`src/components/RingDetailDrawer.tsx`)
-- **Slide-out Panel**: Opens when clicking any cluster on the map or graph.
-- **Financial Risk Metrics**: Total funds at risk (e.g. ₹85.00 Lakhs) and total affected victims.
-- **System Action Recommendations**: Enforces automated freeze protocols (`FREEZE_TARGET_VPAS`, `BLOCK_INGRESS_DEVICES`).
-- **Target Entity List**: Itemized list of mule VPAs and bank accounts flagged for emergency bank freeze.
-
-### 8. Investigator Intelligence Report Modal (`src/components/CaseReportModal.tsx`)
-- **Formal Case Package**: Structured report formatted for bank fraud ops, police cyber cell submission, and CERT-In notifications.
-- **Components**: Executive summary, actionable account freeze matrix table, law enforcement escalation protocol, and a **"Print / Export PDF"** button.
+```
+e:\ET_fraud project\
+├── api/                       # Vercel Native Serverless Functions
+│   ├── cases.js              # GET /api/cases & POST /api/cases serverless handler
+│   └── rings.js              # GET /api/rings serverless handler
+├── server/                    # Standalone Node.js Express Backend
+│   ├── scoring.js            # Multi-signal fusion scorer & clustering algorithm
+│   ├── seed.js               # Faker en_IN 40 synthetic WB case generator
+│   └── server.js             # Express API listening on port 5000
+├── src/
+│   ├── components/
+│   │   ├── Header.tsx        # Brand logo ChakraView + Role Switcher Dropdown
+│   │   ├── LoginScreen.tsx   # Glassmorphism login + 1-second zoom transition
+│   │   ├── FilterBar.tsx     # Severity, Status, Linkage, City filters & View Switcher
+│   │   ├── NammakasaMapView.tsx # CartoDB Dark Matter map, polygons & cluster bubbles
+│   │   ├── NetworkGraphView.tsx # HTML5 Canvas 2D force-directed graph console
+│   │   ├── ListView.tsx      # Expandable complaint cards, freeze action & CSV export
+│   │   ├── DashboardView.tsx # Recharts executive graphs & Excel CSV export
+│   │   ├── CaseIntakeModal.tsx # Complaint intake, webcam QR scanner & demo script
+│   │   ├── RingDetailDrawer.tsx # Slide-out syndicate intelligence panel
+│   │   ├── CaseReportModal.tsx # One-click LEA Subpoena Markdown report modal
+│   │   └── BottomNav.tsx     # Floating bottom navigation capsule
+│   ├── data/
+│   │   └── seedData.ts       # Frontend high-density seed fallback cases
+│   ├── services/
+│   │   └── evidenceEngine.ts # Client-side fallback evidence engine
+│   ├── types/
+│   │   └── fraud.ts          # TypeScript interfaces (FraudCase, FraudRing, etc.)
+│   ├── App.tsx               # Main app router, state management & RBAC logic
+│   └── main.tsx              # Entry point with Leaflet CDN asset fix & ErrorBoundary
+├── vercel.json                # Vercel deployment rewrites config
+├── PRD.md                     # Product Requirement Document
+└── information.md             # Technical & Architectural Detail Document
+```
 
 ---
 
-## ⚙️ Core AI & Multi-Signal Fusion Engine (`src/services/evidenceEngine.ts`)
+## 3. Data Schema Reference
 
-RingBreaker uses a 3-tier multi-signal fusion scoring algorithm:
+### 3.1 `FraudCase`
+```ts
+export interface FraudCase {
+  case_id: string;                // e.g. "CASE-2026-WB001"
+  internal_customer_id?: string;  // DPDP PII replacement (e.g. "CUST-883921")
+  victim_name?: string;
+  account_number?: string;
+  scammer_account_number?: string; // Destination Mule Bank AC
+  ifsc_code?: string;             // Bank IFSC Code
+  scammer_phone_number?: string;
+  upi_vpa: string;                // Destination UPI VPA
+  device_id: string;              // Ingress Device ID
+  ip_address: string;             // IP Address
+  amount: number;                 // Amount at risk in INR (₹)
+  timestamp: string;              // Date & Time
+  city: string;                   // West Bengal City / District
+  lat: number;
+  lng: number;
+  ward_or_area: string;
+  pincode?: string;
+  transcript_text: string;        // Unstructured victim statement / call transcript
+  risk_score: number;             // 0 to 100
+  scam_type: string;              // e.g. "Digital Arrest (CBI/ED Impersonation)"
+}
+```
 
-$$\text{FusionScore}(A, B) = 0.45 \cdot S_{\text{exact}} + 0.35 \cdot S_{\text{script}} + 0.20 \cdot S_{\text{geo}}$$
-
-1. **Exact Match Score ($S_{\text{exact}}$)**:
-   - Matches hard identifiers: Shared UPI VPA, Bank AC, Device ID, or IP subnet.
-2. **Script Similarity Score ($S_{\text{script}}$)**:
-   - Evaluates call transcript text using TF-IDF / Cosine Similarity across key scam phrases (*"Supreme Court clearance"*, *"CBI Digital Arrest"*, *"Courier seizure fine"*).
-3. **Spatiotemporal Score ($S_{\text{geo}}$)**:
-   - Measures ward geographic proximity and timestamp velocity.
-
-### Community Detection
-Applies the **Louvain Community Detection** algorithm to partition the weighted evidence graph into distinct, tightly-knit fraud rings (e.g. *Mixed Multi-Signal Scam Syndicate #1*, *Mule Device #2 Hard-Linked Ring*, *Ring-BRAVO-SCRIPT*).
+### 3.2 `FraudRing`
+```ts
+export interface FraudRing {
+  ring_id: string;                // e.g. "RING-104"
+  ring_name: string;              // e.g. "Script-Only Linked Syndicate"
+  primary_scam_pattern: string;
+  member_case_ids: string[];
+  total_amount_at_risk: number;
+  customers_affected: number;
+  risk_level: 'CRITICAL' | 'HIGH' | 'MEDIUM';
+  cities: string[];
+  evidence_type: 'hard-identifier-linked' | 'script-only-linked' | 'hybrid';
+}
+```
 
 ---
 
-## 💻 Tech Stack
+## 4. REST API Endpoint Specifications
 
-- **Frontend Core**: React 18, TypeScript, Vite
-- **Mapping & Geospatial**: Leaflet, React-Leaflet, CartoDB Positron Tiles
-- **Styling & UI**: TailwindCSS, Vanilla CSS, Lucide Icons
-- **FX & Animations**: Canvas-Confetti, CSS3 Transitions
-- **Version Control**: Git, GitHub (`https://github.com/Sumit642-ai/ET.git`)
+### `GET /api/cases`
+Returns all ingested fraud cases in the database.
+
+### `GET /api/rings`
+Returns all multi-signal detected fraud rings and pairwise evidence links.
+
+### `POST /api/cases`
+Ingests a new complaint, triggers the scoring engine, updates clusters, and returns the newly added case and refreshed rings.
 
 ---
 
-## 🛠️ How to Run Locally
+## 5. Deployment Instructions
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/Sumit642-ai/ET.git
-   cd ET
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start local development server**:
-   ```bash
-   npm run dev
-   ```
-   Open `http://localhost:3000` in your browser.
-
-4. **Build production bundle**:
-   ```bash
-   npm run build
-   ```
+- **Local Server**:
+  ```bash
+  node server/server.js   # Express running on port 5000
+  npm run dev            # Vite running on port 3000
+  ```
+- **Vercel Monolithic Serverless Deployment**:
+  Pushing to `main` branch on GitHub automatically deploys both Vite static output and Vercel serverless functions in `api/` to `et-neon.vercel.app`.
