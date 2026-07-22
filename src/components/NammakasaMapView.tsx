@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polygon, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polygon, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { FraudCase, FraudRing } from '../types/fraud';
 import { Crosshair, Plus, Minus } from 'lucide-react';
@@ -17,7 +17,7 @@ interface NammakasaMapViewProps {
 // Center of West Bengal / Kolkata
 const CENTER_WB: [number, number] = [22.5726, 88.3639];
 
-// Realistic West Bengal Ward & District Boundary Polygon Mesh (Light Pink Choropleth Fill)
+// Realistic West Bengal Ward & District Boundary Polygon Mesh
 const WB_CHOROPLETH_BOUNDARIES: Array<{
   id: string;
   name: string;
@@ -199,33 +199,33 @@ const WB_CHOROPLETH_BOUNDARIES: Array<{
 
 // Dark Maroon Circle Marker Cluster Bubbles matching NammaKasa 1:1
 const NAMMAKASA_MAP_CLUSTERS = [
-  { lat: 22.5726, lng: 88.3639, count: 452, ward: 'Burrabazar & Esplanade', sub: 'Central #46 - Kolkata Municipal' },
-  { lat: 22.5500, lng: 88.3800, count: 690, ward: 'Park Circus & Sealdah', sub: 'South East #58 - Kolkata Municipal' },
-  { lat: 22.5750, lng: 88.4350, count: 767, ward: 'Salt Lake Sector V', sub: 'Tech Hub #12 - Bidhannagar' },
-  { lat: 22.5950, lng: 88.4700, count: 409, ward: 'New Town Action Area I', sub: 'Smart City #04 - NKDA' },
-  { lat: 22.5700, lng: 88.3300, count: 351, ward: 'Howrah Railway & Shibpur', sub: 'West #14 - Howrah Municipal' },
-  { lat: 22.5300, lng: 88.3550, count: 182, ward: 'Alipore & Ballygunge', sub: 'South #69 - Kolkata Municipal' },
-  { lat: 22.6100, lng: 88.3800, count: 274, ward: 'Shyambazar & Dum Dum', sub: 'North #03 - Kolkata Municipal' },
-  { lat: 22.4900, lng: 88.3750, count: 320, ward: 'Jadavpur & Garia', sub: 'South East #96 - Kolkata Municipal' },
-  { lat: 22.6300, lng: 88.4250, count: 435, ward: 'Siliguri Commercial Hub', sub: 'North Bengal #08' },
-  { lat: 22.5450, lng: 88.4450, count: 794, ward: 'Asansol & Durgapur', sub: 'Paschim Bardhaman #19' },
-  { lat: 22.5300, lng: 88.4850, count: 280, ward: 'Kharagpur & Midnapore', sub: 'Paschim Medinipur #07' },
-  { lat: 22.6400, lng: 88.3850, count: 205, ward: 'Malda Town & Murshidabad', sub: 'Ganges Border #11' },
-  { lat: 22.6500, lng: 88.3600, count: 58, ward: 'Bahharampur', sub: 'Murshidabad #02' },
-  { lat: 22.6200, lng: 88.3450, count: 84, ward: 'Hooghly Chinsurah', sub: 'Hooghly #05' },
-  { lat: 22.5850, lng: 88.3100, count: 20, ward: 'Bally Ghat', sub: 'Howrah North #01' },
-  { lat: 22.5700, lng: 88.2950, count: 5, ward: 'Sankrail', sub: 'Howrah South #09' },
-  { lat: 22.5100, lng: 88.3200, count: 116, ward: 'Behala Chowrasta', sub: 'Kolkata South #121' },
-  { lat: 22.4800, lng: 88.3400, count: 99, ward: 'Tollygunge Metro', sub: 'Kolkata South #97' },
-  { lat: 22.4500, lng: 88.3500, count: 15, ward: 'Thakurpukur', sub: 'South 24 Parganas' },
-  { lat: 22.4300, lng: 88.3800, count: 104, ward: 'Baruipur Station', sub: 'Baruipur MC' },
-  { lat: 22.4700, lng: 88.4900, count: 123, ward: 'Bhangur Rajarhat', sub: 'North 24 Parganas' },
-  { lat: 22.5100, lng: 88.5200, count: 281, ward: 'Canning Salt Marshes', sub: 'Sundarbans Border' },
-  { lat: 22.5500, lng: 88.5250, count: 8, ward: 'Basirhat Border', sub: 'North 24 Parganas' },
-  { lat: 22.5600, lng: 88.5050, count: 14, ward: 'Haroa Hub', sub: 'North 24 Parganas' },
-  { lat: 22.5800, lng: 88.4900, count: 56, ward: 'Minakhan Central', sub: 'North 24 Parganas' },
-  { lat: 22.6100, lng: 88.4600, count: 11, ward: 'Kolkata Airport Gate 1', sub: 'Airport MC' },
-  { lat: 22.6350, lng: 88.4000, count: 79, ward: 'Madhyamgram', sub: 'Barasat Sub-div' }
+  { id: 'WB-01', lat: 22.5726, lng: 88.3639, count: 452, ward: 'Burrabazar & Esplanade', sub: 'Central #46 - Kolkata Municipal' },
+  { id: 'WB-02', lat: 22.5500, lng: 88.3800, count: 690, ward: 'Park Circus & Sealdah', sub: 'South East #58 - Kolkata Municipal' },
+  { id: 'WB-03', lat: 22.5750, lng: 88.4350, count: 767, ward: 'Salt Lake Sector V', sub: 'Tech Hub #12 - Bidhannagar' },
+  { id: 'WB-04', lat: 22.5950, lng: 88.4700, count: 409, ward: 'New Town Action Area I', sub: 'Smart City #04 - NKDA' },
+  { id: 'WB-05', lat: 22.5700, lng: 88.3300, count: 351, ward: 'Howrah Railway & Shibpur', sub: 'West #14 - Howrah Municipal' },
+  { id: 'WB-06', lat: 22.5300, lng: 88.3550, count: 182, ward: 'Alipore & Ballygunge', sub: 'South #69 - Kolkata Municipal' },
+  { id: 'WB-07', lat: 22.6100, lng: 88.3800, count: 274, ward: 'Shyambazar & Dum Dum', sub: 'North #03 - Kolkata Municipal' },
+  { id: 'WB-08', lat: 22.4900, lng: 88.3750, count: 320, ward: 'Jadavpur & Garia', sub: 'South East #96 - Kolkata Municipal' },
+  { id: 'WB-09', lat: 22.6300, lng: 88.4250, count: 435, ward: 'Siliguri Commercial Hub', sub: 'North Bengal #08' },
+  { id: 'WB-10', lat: 22.5450, lng: 88.4450, count: 794, ward: 'Asansol & Durgapur', sub: 'Paschim Bardhaman #19' },
+  { id: 'WB-11', lat: 22.5300, lng: 88.4850, count: 280, ward: 'Kharagpur & Midnapore', sub: 'Paschim Medinipur #07' },
+  { id: 'WB-12', lat: 22.6400, lng: 88.3850, count: 205, ward: 'Malda Town & Murshidabad', sub: 'Ganges Border #11' },
+  { id: 'WB-13', lat: 22.6500, lng: 88.3600, count: 58, ward: 'Bahharampur', sub: 'Murshidabad #02' },
+  { id: 'WB-14', lat: 22.6200, lng: 88.3450, count: 84, ward: 'Hooghly Chinsurah', sub: 'Hooghly #05' },
+  { id: 'WB-15', lat: 22.5850, lng: 88.3100, count: 20, ward: 'Bally Ghat', sub: 'Howrah North #01' },
+  { id: 'WB-16', lat: 22.5700, lng: 88.2950, count: 5, ward: 'Sankrail', sub: 'Howrah South #09' },
+  { id: 'WB-17', lat: 22.5100, lng: 88.3200, count: 116, ward: 'Behala Chowrasta', sub: 'Kolkata South #121' },
+  { id: 'WB-18', lat: 22.4800, lng: 88.3400, count: 99, ward: 'Tollygunge Metro', sub: 'Kolkata South #97' },
+  { id: 'WB-19', lat: 22.4500, lng: 88.3500, count: 15, ward: 'Thakurpukur', sub: 'South 24 Parganas' },
+  { id: 'WB-20', lat: 22.4300, lng: 88.3800, count: 104, ward: 'Baruipur Station', sub: 'Baruipur MC' },
+  { id: 'WB-21', lat: 22.4700, lng: 88.4900, count: 123, ward: 'Bhangur Rajarhat', sub: 'North 24 Parganas' },
+  { id: 'WB-22', lat: 22.5100, lng: 88.5200, count: 281, ward: 'Canning Salt Marshes', sub: 'Sundarbans Border' },
+  { id: 'WB-23', lat: 22.5500, lng: 88.5250, count: 8, ward: 'Basirhat Border', sub: 'North 24 Parganas' },
+  { id: 'WB-24', lat: 22.5600, lng: 88.5050, count: 14, ward: 'Haroa Hub', sub: 'North 24 Parganas' },
+  { id: 'WB-25', lat: 22.5800, lng: 88.4900, count: 56, ward: 'Minakhan Central', sub: 'North 24 Parganas' },
+  { id: 'WB-26', lat: 22.6100, lng: 88.4600, count: 11, ward: 'Kolkata Airport Gate 1', sub: 'Airport MC' },
+  { id: 'WB-27', lat: 22.6350, lng: 88.4000, count: 79, ward: 'Madhyamgram', sub: 'Barasat Sub-div' }
 ];
 
 export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
@@ -240,9 +240,10 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
   const [selectedWard, setSelectedWard] = useState<typeof WB_CHOROPLETH_BOUNDARIES[0] | null>(
     WB_CHOROPLETH_BOUNDARIES[0]
   );
+  const [hoveredWardId, setHoveredWardId] = useState<string | null>(null);
 
-  // Helper function to create 1:1 NammaKasa dark maroon cluster circle icon
-  const createNammaClusterIcon = (count: number) => {
+  // Helper function to create 1:1 NammaKasa dark maroon circle icon
+  const createNammaClusterIcon = (count: number, isHovered: boolean) => {
     let sizePx = 42;
     let fontSize = '0.85rem';
     if (count >= 400) {
@@ -256,14 +257,18 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
       fontSize = '0.75rem';
     }
 
+    if (isHovered) {
+      sizePx = Math.round(sizePx * 1.18);
+    }
+
     return L.divIcon({
       html: `
         <div 
           style="
             width: ${sizePx}px;
             height: ${sizePx}px;
-            background-color: #7A1C1C;
-            border: 2px solid #FFFFFF;
+            background-color: ${isHovered ? '#900C3F' : '#7A1C1C'};
+            border: ${isHovered ? '3px solid #FFFFFF' : '2px solid #FFFFFF'};
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -272,10 +277,10 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
             font-weight: 800;
             font-size: ${fontSize};
             font-family: 'Outfit', sans-serif;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: ${isHovered ? '0 8px 24px rgba(220,38,38,0.5)' : '0 4px 14px rgba(0,0,0,0.3)'};
+            transform: ${isHovered ? 'scale(1.15)' : 'scale(1)'};
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
           "
-          class="namma-maroon-circle"
         >
           ${count}
         </div>
@@ -288,7 +293,7 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
 
   return (
     <div className="map-canvas-wrapper relative select-none w-full min-h-[500px]" style={{ height: 'calc(100vh - 170px)' }}>
-      {/* Top Left Stats Badge (Exact NammaKasa 1:1 Match: 6893 Active | 7160 Reports) */}
+      {/* Top Left Stats Badge */}
       <div 
         className="absolute top-5 left-5 z-[999] bg-white border border-gray-100 rounded-xl px-4 py-2 shadow-md flex items-center gap-3 font-sans"
       >
@@ -303,7 +308,7 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
         </div>
       </div>
 
-      {/* Bottom Left Active Ward Card (Exact NammaKasa 1:1 Match: Hoodi / Mahadevapura / 176 reports) */}
+      {/* Bottom Left Active Ward Card */}
       {selectedWard && (
         <div className="absolute bottom-6 left-5 z-[999] bg-white border border-gray-100 rounded-2xl p-4 shadow-xl max-w-xs font-sans animate-in fade-in slide-in-from-bottom-2 duration-200">
           <h4 className="font-extrabold text-slate-900 text-sm font-display leading-tight">
@@ -321,7 +326,7 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
         </div>
       )}
 
-      {/* Top Right Floating App Icon Accent Button */}
+      {/* Top Right Floating Accent Button */}
       <div className="absolute top-5 right-5 z-[999]">
         <button
           onClick={onOpenIntake}
@@ -345,46 +350,70 @@ export const NammakasaMapView: React.FC<NammakasaMapViewProps> = ({
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
 
-        {/* West Bengal Light Pink Choropleth Ward Mesh Layer */}
-        {WB_CHOROPLETH_BOUNDARIES.map((poly) => (
-          <Polygon
-            key={poly.id}
-            positions={poly.bounds}
-            pathOptions={{
-              color: '#F87171',
-              fillColor: '#FCA5A5',
-              fillOpacity: selectedWard?.id === poly.id ? 0.45 : 0.28,
-              weight: selectedWard?.id === poly.id ? 2 : 1,
-              dashArray: '2, 4'
-            }}
-            eventHandlers={{
-              mouseover: () => setSelectedWard(poly),
-              click: () => setSelectedWard(poly)
-            }}
-          />
-        ))}
+        {/* West Bengal Light Pink Choropleth Ward Mesh Layer with Interactive Hover Highlight */}
+        {WB_CHOROPLETH_BOUNDARIES.map((poly) => {
+          const isHovered = hoveredWardId === poly.id || selectedWard?.id === poly.id;
 
-        {/* NammaKasa Dark Maroon Circle Cluster Bubbles */}
-        {NAMMAKASA_MAP_CLUSTERS.map((cluster, idx) => (
-          <Marker
-            key={idx}
-            position={[cluster.lat, cluster.lng]}
-            icon={createNammaClusterIcon(cluster.count)}
-            eventHandlers={{
-              click: () => {
-                const matchedWard = WB_CHOROPLETH_BOUNDARIES.find(w => w.name === cluster.ward);
-                if (matchedWard) setSelectedWard(matchedWard);
-              }
-            }}
-          >
-            <Tooltip direction="top" offset={[0, -20]} opacity={0.95}>
-              <div className="p-1 text-center font-sans">
-                <strong className="block text-slate-900 text-xs font-bold">{cluster.ward}</strong>
-                <span className="text-rose-600 font-extrabold text-xs">{cluster.count} Active Reports</span>
-              </div>
-            </Tooltip>
-          </Marker>
-        ))}
+          return (
+            <Polygon
+              key={poly.id}
+              positions={poly.bounds}
+              pathOptions={{
+                color: isHovered ? '#DC2626' : '#F87171',
+                fillColor: isHovered ? '#F87171' : '#FCA5A5',
+                fillOpacity: isHovered ? 0.65 : 0.28,
+                weight: isHovered ? 3.5 : 1.2,
+                dashArray: isHovered ? undefined : '2, 4'
+              }}
+              eventHandlers={{
+                mouseover: () => {
+                  setHoveredWardId(poly.id);
+                  setSelectedWard(poly);
+                },
+                mouseout: () => {
+                  setHoveredWardId(null);
+                },
+                click: () => {
+                  setSelectedWard(poly);
+                }
+              }}
+            />
+          );
+        })}
+
+        {/* NammaKasa Dark Maroon Circle Cluster Bubbles with Sync Hover */}
+        {NAMMAKASA_MAP_CLUSTERS.map((cluster, idx) => {
+          const isHovered = hoveredWardId === cluster.id || selectedWard?.id === cluster.id;
+
+          return (
+            <Marker
+              key={idx}
+              position={[cluster.lat, cluster.lng]}
+              icon={createNammaClusterIcon(cluster.count, isHovered)}
+              eventHandlers={{
+                mouseover: () => {
+                  setHoveredWardId(cluster.id);
+                  const matchedWard = WB_CHOROPLETH_BOUNDARIES.find(w => w.id === cluster.id || w.name === cluster.ward);
+                  if (matchedWard) setSelectedWard(matchedWard);
+                },
+                mouseout: () => {
+                  setHoveredWardId(null);
+                },
+                click: () => {
+                  const matchedWard = WB_CHOROPLETH_BOUNDARIES.find(w => w.id === cluster.id || w.name === cluster.ward);
+                  if (matchedWard) setSelectedWard(matchedWard);
+                }
+              }}
+            >
+              <Tooltip direction="top" offset={[0, -20]} opacity={0.95}>
+                <div className="p-1 text-center font-sans">
+                  <strong className="block text-slate-900 text-xs font-bold">{cluster.ward}</strong>
+                  <span className="text-rose-600 font-extrabold text-xs">{cluster.count} Active Reports</span>
+                </div>
+              </Tooltip>
+            </Marker>
+          );
+        })}
 
         {/* Stacked Map Controls (Locate Me, +, -) */}
         <div className="absolute bottom-6 right-5 z-[999] flex flex-col gap-2 select-none">
