@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, AreaChart, Area, Legend 
 } from 'recharts';
-import { ShieldAlert, Users, Landmark, AlertTriangle, ArrowUpRight, TrendingUp } from 'lucide-react';
+import { ShieldAlert, Users, Landmark, AlertTriangle, ArrowUpRight, TrendingUp, Download, FileSpreadsheet } from 'lucide-react';
 import { FraudRing, FraudCase } from '../types/fraud';
 
 interface DashboardViewProps {
@@ -51,59 +51,105 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const totalAmountAtRisk = rings.reduce((acc, r) => acc + r.total_amount_at_risk, 0);
 
+  // One-Click Export Analytics to Excel / CSV
+  const handleExportExcel = () => {
+    let csvContent = "CHAKRAVIEW EXECUTIVE ANALYTICS REPORT\n\n";
+
+    csvContent += "1. TOTAL FUNDS AT RISK BY DISTRICT (₹ LAKHS)\n";
+    csvContent += "District,Funds at Risk (₹ Lakhs),Total Cases\n";
+    DISTRICT_FUNDS_DATA.forEach(d => {
+      csvContent += `"${d.district}",${d.funds},${d.cases}\n`;
+    });
+
+    csvContent += "\n2. ACTIVE SYNDICATES BY CATEGORY\n";
+    csvContent += "Category,Active Rings Count\n";
+    SYNDICATE_CATEGORY_DATA.forEach(c => {
+      csvContent += `"${c.name}",${c.value}\n`;
+    });
+
+    csvContent += "\n3. ACTIVE FRAUD RINGS\n";
+    csvContent += "Ring ID,Syndicate Name,Primary Scam Pattern,Affected Victims,Funds at Risk (₹),Cities,Evidence Type\n";
+    rings.forEach(r => {
+      csvContent += `"${r.ring_id}","${r.ring_name}","${r.primary_scam_pattern}",${r.customers_affected},${r.total_amount_at_risk},"${r.cities.join('; ')}","${r.evidence_type}"\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ChakraView_Executive_Analytics_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  };
+
   return (
-    <div className="w-full h-[calc(100vh-170px)] bg-slate-50 p-6 overflow-y-auto font-sans select-none">
+    <div className="w-full h-[calc(100vh-170px)] bg-[#0B101E] text-white p-6 overflow-y-auto font-sans select-none transition-colors">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header Toolbar with Export to Excel Button */}
+        <div className="flex items-center justify-between bg-[#1A2235] p-5 rounded-2xl border border-slate-700/80 shadow-md">
+          <div>
+            <h2 className="text-xl font-extrabold font-display text-white">ChakraView Executive Intelligence Reports</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Real-time threat landscape analytics & active crime ring intelligence</p>
+          </div>
+
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-lg shadow-rose-950/50"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-white" />
+            <span>Export Analytics to Excel (.CSV)</span>
+          </button>
+        </div>
+
         {/* Top Overview Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs space-y-2">
-            <div className="flex items-center justify-between text-gray-500 text-xs font-semibold">
+          <div className="bg-[#1A2235] p-5 rounded-2xl border border-slate-800 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
               <span>Total Funds At Risk</span>
-              <Landmark className="w-4 h-4 text-rose-600" />
+              <Landmark className="w-4 h-4 text-rose-500" />
             </div>
-            <div className="text-2xl font-extrabold text-slate-900 font-display">
+            <div className="text-2xl font-extrabold text-white font-display">
               ₹{(totalAmountAtRisk / 10000000).toFixed(2)} Cr
             </div>
-            <p className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+            <p className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
               <TrendingUp className="w-3 h-3" /> +14.2% vs last week
             </p>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs space-y-2">
-            <div className="flex items-center justify-between text-gray-500 text-xs font-semibold">
+          <div className="bg-[#1A2235] p-5 rounded-2xl border border-slate-800 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
               <span>Active Fraud Rings</span>
-              <ShieldAlert className="w-4 h-4 text-rose-600" />
+              <ShieldAlert className="w-4 h-4 text-rose-500" />
             </div>
-            <div className="text-2xl font-extrabold text-slate-900 font-display">
+            <div className="text-2xl font-extrabold text-white font-display">
               {rings.length} Syndicates
             </div>
-            <p className="text-[11px] text-rose-600 font-bold">
+            <p className="text-[11px] text-rose-400 font-bold">
               3 High Urgency Threats
             </p>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs space-y-2">
-            <div className="flex items-center justify-between text-gray-500 text-xs font-semibold">
+          <div className="bg-[#1A2235] p-5 rounded-2xl border border-slate-800 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
               <span>Total Complaints</span>
-              <Users className="w-4 h-4 text-slate-600" />
+              <Users className="w-4 h-4 text-slate-300" />
             </div>
-            <div className="text-2xl font-extrabold text-slate-900 font-display">
-              6,893 Active
+            <div className="text-2xl font-extrabold text-white font-display">
+              {cases.length * 140} Active
             </div>
-            <p className="text-[11px] text-gray-500 font-medium">
+            <p className="text-[11px] text-slate-400 font-medium">
               West Bengal & Kolkata Metro
             </p>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs space-y-2">
-            <div className="flex items-center justify-between text-gray-500 text-xs font-semibold">
+          <div className="bg-[#1A2235] p-5 rounded-2xl border border-slate-800 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
               <span>Mule Accounts Frozen</span>
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
             </div>
-            <div className="text-2xl font-extrabold text-emerald-600 font-display">
+            <div className="text-2xl font-extrabold text-emerald-400 font-display">
               142 VPAs
             </div>
-            <p className="text-[11px] text-emerald-600 font-bold">
+            <p className="text-[11px] text-emerald-400 font-bold">
               Emergency Debit Freeze
             </p>
           </div>
@@ -112,21 +158,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Recharts Analytics Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Chart 1: BarChart — Funds at Risk by District */}
-          <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-gray-200 shadow-xs space-y-3">
+          <div className="lg:col-span-2 bg-[#1A2235] p-5 rounded-2xl border border-slate-800 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-extrabold text-slate-900 text-sm font-display">
+              <h3 className="font-extrabold text-white text-sm font-display">
                 Total Funds at Risk (₹ Lakhs) by District
               </h3>
-              <span className="text-[11px] text-gray-400 font-mono">Real-time Ingestion</span>
+              <span className="text-[11px] text-slate-400 font-mono">Real-time Ingestion</span>
             </div>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={DISTRICT_FUNDS_DATA} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                  <XAxis dataKey="district" tick={{ fontSize: 10, fill: '#64748B' }} />
-                  <YAxis tick={{ fontSize: 10, fill: '#64748B' }} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                  <XAxis dataKey="district" tick={{ fontSize: 10, fill: '#94A3B8' }} />
+                  <YAxis tick={{ fontSize: 10, fill: '#94A3B8' }} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#0F172A', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '11px' }}
+                    contentStyle={{ backgroundColor: '#0F172A', borderRadius: '12px', border: '1px solid #334155', color: '#fff', fontSize: '11px' }}
                     formatter={(val: any) => [`₹${val} Lakhs`, 'Funds at Risk']}
                   />
                   <Bar dataKey="funds" fill="#DC2626" radius={[6, 6, 0, 0]} />
@@ -136,8 +182,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Chart 2: Donut Chart — Active Syndicates by Category */}
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs space-y-3">
-            <h3 className="font-extrabold text-slate-900 text-sm font-display">
+          <div className="bg-[#1A2235] p-5 rounded-2xl border border-slate-800 shadow-xs space-y-3">
+            <h3 className="font-extrabold text-white text-sm font-display">
               Active Syndicates by Category
             </h3>
             <div className="h-64 w-full flex items-center justify-center">
@@ -157,7 +203,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#0F172A', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '11px' }}
+                    contentStyle={{ backgroundColor: '#0F172A', borderRadius: '12px', border: '1px solid #334155', color: '#fff', fontSize: '11px' }}
                   />
                   <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 </PieChart>
@@ -167,12 +213,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Chart 3: AreaChart — Case Velocity Timeline */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs space-y-3">
+        <div className="bg-[#1A2235] p-5 rounded-2xl border border-slate-800 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-extrabold text-slate-900 text-sm font-display">
+            <h3 className="font-extrabold text-white text-sm font-display">
               Complaint Velocity & Clustering Rate Timeline
             </h3>
-            <span className="text-[11px] text-rose-600 font-bold">7-Day Spike Detected</span>
+            <span className="text-[11px] text-rose-400 font-bold">7-Day Spike Detected</span>
           </div>
           <div className="h-60 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -183,11 +229,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <stop offset="95%" stopColor="#DC2626" stopOpacity={0.0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748B' }} />
-                <YAxis tick={{ fontSize: 10, fill: '#64748B' }} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94A3B8' }} />
+                <YAxis tick={{ fontSize: 10, fill: '#94A3B8' }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0F172A', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '11px' }}
+                  contentStyle={{ backgroundColor: '#0F172A', borderRadius: '12px', border: '1px solid #334155', color: '#fff', fontSize: '11px' }}
                 />
                 <Area type="monotone" dataKey="complaints" stroke="#DC2626" strokeWidth={2.5} fillOpacity={1} fill="url(#colorComplaints)" />
               </AreaChart>
@@ -196,9 +242,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Active Syndicates Table */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs">
-          <h3 className="text-base font-extrabold text-slate-900 font-display mb-4">
-            Active Chakravyuh Crime Rings Overview
+        <div className="bg-[#1A2235] rounded-2xl border border-slate-800 p-6 shadow-xs">
+          <h3 className="text-base font-extrabold text-white font-display mb-4">
+            Active ChakraView Crime Rings Overview
           </h3>
 
           <div className="space-y-3">
@@ -206,28 +252,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div 
                 key={ring.ring_id}
                 onClick={() => onSelectRing(ring)}
-                className="p-4 rounded-xl bg-slate-50 hover:bg-rose-50/50 border border-gray-200 cursor-pointer transition-all flex items-center justify-between"
+                className="p-4 rounded-xl bg-[#0B101E] hover:bg-slate-800/80 border border-slate-800 cursor-pointer transition-all flex items-center justify-between"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                    <span className="font-mono text-xs font-bold text-rose-400 bg-rose-950 px-2 py-0.5 rounded border border-rose-900">
                       {ring.ring_id}
                     </span>
-                    <h4 className="font-bold text-slate-900 text-sm">{ring.ring_name}</h4>
+                    <h4 className="font-bold text-white text-sm">{ring.ring_name}</h4>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-slate-400 mt-1">
                     {ring.customers_affected} Victims across {ring.cities.join(', ')}
                   </p>
                 </div>
 
                 <div className="text-right flex items-center gap-4">
                   <div>
-                    <span className="text-[10px] text-gray-400 font-semibold block uppercase">Funds at Risk</span>
-                    <strong className="text-rose-600 font-mono text-sm font-bold">
+                    <span className="text-[10px] text-slate-400 font-semibold block uppercase">Funds at Risk</span>
+                    <strong className="text-rose-400 font-mono text-sm font-bold">
                       ₹{(ring.total_amount_at_risk / 100000).toFixed(2)} L
                     </strong>
                   </div>
-                  <ArrowUpRight className="w-5 h-5 text-gray-400" />
+                  <ArrowUpRight className="w-5 h-5 text-slate-400" />
                 </div>
               </div>
             ))}

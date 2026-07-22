@@ -37,7 +37,6 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole, onRoleChange }) => 
   const [selectedCase, setSelectedCase] = useState<FraudCase | null>(null);
   const [activeReport, setActiveReport] = useState<CaseReport | null>(null);
 
-  // Sync Dark Mode class on <html> element
   useEffect(() => {
     document.documentElement.classList.add('dark');
   }, []);
@@ -99,23 +98,35 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole, onRoleChange }) => 
     return activeRings;
   }, [activeRings, userRole]);
 
-  // Apply UI Filters
+  // Apply End-to-End Filter Options (Severity, Status, Linkage Type, City, Search)
   const filteredCases = useMemo(() => {
     return rbacCases.filter(c => {
+      // 1. Severity Filter
       if (filters.severity === 'critical' && c.risk_score < 90) return false;
       if (filters.severity === 'high' && (c.risk_score < 75 || c.risk_score >= 90)) return false;
       if (filters.severity === 'medium' && (c.risk_score < 50 || c.risk_score >= 75)) return false;
       if (filters.severity === 'low' && c.risk_score >= 50) return false;
 
+      // 2. City Filter
       if (filters.selectedCity !== 'all' && c.city !== filters.selectedCity) return false;
 
+      // 3. Status Filter (active vs resolved vs in_progress)
+      if (filters.status === 'active' && c.risk_score < 70) return false;
+      if (filters.status === 'in_progress' && (c.risk_score < 50 || c.risk_score >= 70)) return false;
+      if (filters.status === 'resolved' && c.risk_score >= 50) return false;
+
+      // 4. Linkage Type Filter
+      if (filters.linkageType === 'script-only-linked' && !c.transcript_text.toLowerCase().includes('cbi')) return false;
+      if (filters.linkageType === 'hard-identifier-linked' && c.transcript_text.toLowerCase().includes('cbi')) return false;
+
+      // 5. Search Query
       if (filters.searchQuery.trim()) {
         const q = filters.searchQuery.toLowerCase();
-        const matchVictim = c.victim_name?.toLowerCase().includes(q) || c.internal_customer_id?.toLowerCase().includes(q);
-        const matchUpi = c.upi_vpa?.toLowerCase().includes(q);
-        const matchDevice = c.device_id?.toLowerCase().includes(q);
-        const matchCity = c.city.toLowerCase().includes(q);
-        const matchTranscript = c.transcript_text.toLowerCase().includes(q);
+        const matchVictim = (c.victim_name || c.internal_customer_id || '').toLowerCase().includes(q);
+        const matchUpi = (c.upi_vpa || '').toLowerCase().includes(q);
+        const matchDevice = (c.device_id || '').toLowerCase().includes(q);
+        const matchCity = (c.city || '').toLowerCase().includes(q);
+        const matchTranscript = (c.transcript_text || '').toLowerCase().includes(q);
         if (!matchVictim && !matchUpi && !matchDevice && !matchCity && !matchTranscript) return false;
       }
 
@@ -123,9 +134,16 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole, onRoleChange }) => 
     });
   }, [rbacCases, filters]);
 
+  const filteredRings = useMemo(() => {
+    return rbacRings.filter(r => {
+      if (filters.linkageType !== 'all' && r.evidence_type !== filters.linkageType) return false;
+      return true;
+    });
+  }, [rbacRings, filters]);
+
   const totalAmountAtRisk = useMemo(() => {
-    return rbacRings.reduce((acc, r) => acc + r.total_amount_at_risk, 0);
-  }, [rbacRings]);
+    return filteredRings.reduce((acc, r) => acc + r.total_amount_at_risk, 0);
+  }, [filteredRings]);
 
   const totalReportCount = useMemo(() => {
     return 6893 + (cases.length - INITIAL_CASES.length);
@@ -162,12 +180,12 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole, onRoleChange }) => 
 
   return (
     <div className="min-h-screen bg-[#0B101E] text-white flex flex-col font-sans selection:bg-rose-600 selection:text-white pb-16 transition-colors">
-      {/* Top Header Navigation with Role Dropdown */}
+      {/* Top Header Navigation */}
       <Header
         currentView={currentView}
         onViewChange={setCurrentView}
         onOpenIntake={() => setIsIntakeOpen(true)}
-        activeRingCount={rbacRings.length}
+        activeRingCount={filteredRings.length}
         totalAtRisk={totalAmountAtRisk}
         language={language}
         onToggleLanguage={() => setLanguage(l => l === 'bn' ? 'en' : 'bn')}
@@ -180,7 +198,7 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole, onRoleChange }) => 
         <span className="flex items-center gap-2">
           <span className={`w-2.5 h-2.5 rounded-full ${userRole === 'analyst' ? 'bg-amber-400 shadow-amber-400/50' : 'bg-emerald-400 shadow-emerald-400/50'} shadow-sm`} />
           CURRENT ROLE SCOPE: <strong className="uppercase text-rose-400">{userRole === 'analyst' ? 'Bank Analyst (30% Scope)' : 'Police Admin (100% Full Scope)'}</strong>
-          <span className="text-slate-400 text-[11px]">({userRole === 'analyst' ? `${rbacCases.length} Cases` : `${rbacCases.length} Cases (State-wide)`})</span>
+          <span className="text-slate-400 text-[11px]">({filteredCases.length} Active Complaints Filtered)</span>
         </span>
         <a href="/login" className="text-slate-400 hover:text-white underline font-bold">Switch Role / Logout</a>
       </div>
@@ -207,11 +225,11 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole, onRoleChange }) => 
         {currentView === 'map' && (
           <NammakasaMapView
             cases={filteredCases}
-            rings={rbacRings}
+            rings={filteredRings}
             onSelectRing={setSelectedRing}
             onSelectCase={setSelectedCase}
             onOpenIntake={() => setIsIntakeOpen(true)}
-            activeRingCount={rbacRings.length}
+            activeRingCount={filteredRings.length}
             totalAmountAtRisk={totalAmountAtRisk}
           />
         )}
@@ -220,7 +238,7 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole, onRoleChange }) => 
           <NetworkGraphView
             cases={filteredCases}
             links={activeLinks}
-            rings={rbacRings}
+            rings={filteredRings}
             onSelectCase={setSelectedCase}
             onSelectRing={setSelectedRing}
           />
@@ -229,16 +247,17 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole, onRoleChange }) => 
         {currentView === 'list' && (
           <ListView
             cases={filteredCases}
-            rings={rbacRings}
+            rings={filteredRings}
             onSelectCase={setSelectedCase}
             onSelectRing={setSelectedRing}
+            onOpenReport={setActiveReport}
           />
         )}
 
         {currentView === 'reports' && (
           <DashboardView
             cases={filteredCases}
-            rings={rbacRings}
+            rings={filteredRings}
             onSelectRing={setSelectedRing}
           />
         )}
@@ -247,7 +266,7 @@ const MainApplication: React.FC<MainAppProps> = ({ userRole, onRoleChange }) => 
       {/* Sticky Bottom Action Navigation Bar */}
       <BottomNav
         onOpenIntake={() => setIsIntakeOpen(true)}
-        activeRingCount={rbacRings.length}
+        activeRingCount={filteredRings.length}
         totalAtRisk={totalAmountAtRisk}
         totalReportCount={totalReportCount}
       />

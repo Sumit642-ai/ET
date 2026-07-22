@@ -12,7 +12,7 @@ export type EvidenceType = 'hard-identifier-linked' | 'script-only-linked' | 'hy
 
 export interface FraudCase {
   case_id: string;
-  internal_customer_id?: string; // Internal Customer ID (replaces victim name for DPDP PII compliance)
+  internal_customer_id?: string;
   victim_name?: string;
   account_number?: string;
   scammer_account_number?: string;
@@ -41,7 +41,7 @@ export interface EvidenceLink {
   case_id_a?: string;
   case_id_b?: string;
   linkage_type: LinkageType;
-  confidence_score: number; // 0.00 to 1.00
+  confidence_score: number;
   exact_match_score?: number;
   script_similarity_score?: number;
   behavioral_score?: number;
@@ -104,8 +104,8 @@ export type ViewMode = 'map' | 'graph' | 'list' | 'reports';
 
 export interface FilterState {
   severity: 'all' | 'critical' | 'high' | 'medium' | 'low';
-  status: 'all' | 'active' | 'frozen' | 'resolved';
-  linkageType: 'all' | 'hard' | 'script';
+  status: 'all' | 'active' | 'in_progress' | 'frozen' | 'resolved';
+  linkageType: 'all' | 'script-only-linked' | 'hard-identifier-linked' | 'mixed-evidence' | 'hard' | 'script';
   searchQuery: string;
   selectedCity: string;
 }
