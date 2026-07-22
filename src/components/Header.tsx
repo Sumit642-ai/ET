@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ViewMode } from '../types/fraud';
-import { Shield, Building2, ChevronDown, User, Mail, X } from 'lucide-react';
+import { Shield, Building2, ChevronDown, User } from 'lucide-react';
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -19,30 +19,10 @@ export const Header: React.FC<HeaderProps> = ({
   onRoleChange
 }) => {
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
-  const [showNotification, setShowNotification] = useState(true);
 
   return (
     <header className="w-full bg-[#0B101E] text-white select-none shadow-md font-sans z-50 border-b border-[#1A2235]">
-      {/* 1. Top Pink Announcement Bar */}
-      {showNotification && (
-        <div className="bg-rose-950/80 text-rose-200 border-b border-rose-900/50 text-xs py-1.5 px-6 flex items-center justify-between font-medium">
-          <div className="flex items-center gap-2 max-w-7xl mx-auto w-full">
-            <Mail className="w-4 h-4 shrink-0 text-rose-500" />
-            <span>
-              <strong>Join 593 Bengalureans</strong> on the Monday digest
-            </span>
-          </div>
-          <button
-            onClick={() => setShowNotification(false)}
-            className="text-rose-400 hover:text-rose-200 transition-colors p-0.5"
-            title="Dismiss Announcement"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
-
-      {/* 2. Main Navbar Row */}
+      {/* Main Navbar Row */}
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
         {/* Left: Brand Logo ChakraView */}
         <div className="flex items-center gap-3">
