@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ViewMode } from '../types/fraud';
-import { Mail, X, Instagram } from 'lucide-react';
+import { Shield, Sparkles, Mail, X, Lock } from 'lucide-react';
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -13,96 +13,76 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  currentView,
-  onViewChange,
-  onOpenIntake,
-  activeRingCount,
-  totalAtRisk,
   language,
   onToggleLanguage
 }) => {
-  const [showBanner, setShowBanner] = useState(true);
-  const [showLanguageTooltip, setShowLanguageTooltip] = useState(true);
+  const [showNotification, setShowNotification] = useState(true);
+  const [showTooltip, setShowTooltip] = useState(true);
 
   return (
-    <header className="w-full select-none z-50 bg-white border-b border-slate-100">
-      {/* 1. Main Top Header Bar (NammaKasa Exact 1:1 Match) */}
-      <div className="namma-header-row">
-        {/* Logo Text + Subtitle */}
-        <div style={{ display: 'flex', alignItems: 'baseline' }}>
-          <span className="namma-logo-text">Namma</span>
-          <span className="namma-logo-accent">ಕস</span>
-          <span className="namma-version-tag">v1.3.5</span>
-        </div>
-
-        {/* Right Language Pill + Tooltip + Social Icon */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
-          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            {/* Language Selector Pill */}
-            <button
-              onClick={onToggleLanguage}
-              className="namma-lang-btn"
-            >
-              {language === 'bn' ? 'বাংলা' : 'ಕನ್ನಡ'}
-            </button>
-
-            {/* Black Tooltip Popup ("বাংলায় ব্যবহার করুন") */}
-            {showLanguageTooltip && (
-              <div className="namma-tooltip-box">
-                <div className="namma-tooltip-caret" />
-                <div className="namma-tooltip-content">
-                  <span>{language === 'bn' ? 'বাংলায় ব্যবহার করুন' : 'ಕನ್ನಡದಲ್ಲಿ ಬಳসি'}</span>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowLanguageTooltip(false);
-                    }}
-                    style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', display: 'flex' }}
-                  >
-                    <X style={{ width: '12px', height: '12px' }} />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Social Icon (Instagram / Share Icon matching reference image) */}
-          <button 
-            style={{ 
-              width: '32px', 
-              height: '32px', 
-              borderRadius: '8px', 
-              border: '1px solid #FCA5A5', 
-              background: '#FFFFFF', 
-              color: '#E1306C', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
-            title="Follow"
-          >
-            <Instagram style={{ width: '16px', height: '16px', color: '#E1306C' }} />
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Light Pink Digest Announcement Banner */}
-      {showBanner && (
+    <header className="w-full bg-white select-none shadow-xs font-sans z-50">
+      {/* 1. Top Pink Announcement Bar (Exact Spec: "Join 593 Bengalureans on the Monday digest") */}
+      {showNotification && (
         <div className="namma-digest-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Mail style={{ width: '14px', height: '14px', color: '#C53030' }} />
-            <strong style={{ color: '#C53030' }}>Join 593 Bengalureans</strong>
-            <span style={{ color: '#E53E3E' }}>on the Monday digest</span>
+          <div className="flex items-center gap-2 max-w-7xl mx-auto w-full">
+            <Mail className="w-4 h-4 shrink-0 text-rose-600" />
+            <span>
+              <strong>Join 593 Bengalureans</strong> on the Monday digest
+            </span>
           </div>
-          <button 
-            onClick={() => setShowBanner(false)}
-            style={{ background: 'none', border: 'none', color: '#FCA5A5', cursor: 'pointer', padding: '2px' }}
+          <button
+            onClick={() => setShowNotification(false)}
+            className="text-rose-400 hover:text-rose-700 transition-colors p-0.5"
+            title="Dismiss Announcement"
           >
-            <X style={{ width: '14px', height: '14px' }} />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
+
+      {/* 2. Main Navbar Row */}
+      <div className="namma-header-row max-w-7xl mx-auto">
+        {/* Left: Brand Logo CHAKRAVYUH */}
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-extrabold shadow-sm">
+            <Shield className="w-4 h-4 text-rose-500" />
+          </div>
+          <a href="/" className="flex items-baseline gap-0.5 no-underline">
+            <span className="namma-logo-text">CHAKRA</span>
+            <span className="namma-logo-accent">VYUH</span>
+            <span className="namma-version-tag">v1.3.5</span>
+          </a>
+        </div>
+
+        {/* Right: Language Toggle Pill Button ('বাংলা' / 'English') with Floating Caret Tooltip */}
+        <div className="relative">
+          <button
+            onClick={onToggleLanguage}
+            className="namma-lang-btn font-sans"
+          >
+            {language === 'bn' ? 'বাংলা' : 'English'}
+          </button>
+
+          {/* Caret Floating Dark Tooltip ("বাংলায় ব্যবহার করুন") */}
+          {showTooltip && (
+            <div className="namma-tooltip-box">
+              <div className="namma-tooltip-caret" />
+              <div className="namma-tooltip-content">
+                <span>বাংলায় ব্যবহার করুন</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowTooltip(false);
+                  }}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </header>
   );
 };
